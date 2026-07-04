@@ -15,13 +15,53 @@ Run from repo root (pnpm workspaces). `@ledger/shared` must be built before `app
 | `pnpm db:migrate` | `prisma migrate dev` (creates + applies migration, regenerates client) |
 | `pnpm db:seed` | Runs `apps/api/prisma/seed.ts` via tsx — seeds banks, accounts, categories, classification rules |
 | `pnpm db:studio` | Opens Prisma Studio |
+| `pnpm test` | Runs Vitest in both apps (`--recursive`) |
 | `docker compose up -d` | Starts Postgres 16 on host port **5434** (mapped to container 5432), user/pass/db all `ledger` |
 
 Per-app scripts (run with `pnpm --filter @ledger/api <script>` or `--filter @ledger/web`):
-- api: `dev`, `build`, `start` (runs `dist/main.js`), `lint`, `prisma:generate`, `prisma:migrate`, `prisma:deploy`, `prisma:seed`, `prisma:studio`
-- web: `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`
+- api: `dev`, `build`, `start` (runs `dist/main.js`), `lint`, `test`, `test:watch`, `test:coverage`, `prisma:generate`, `prisma:migrate`, `prisma:deploy`, `prisma:seed`, `prisma:studio`
+- web: `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `test`, `test:watch`, `test:coverage`
 
-No test runner is configured.
+## Testing (Vitest)
+
+Both apps use **Vitest 2** (pinned to `^2` — Vitest 4 requires Vite 6, we're on Vite 5).
+
+- **Configs**: `apps/api/vitest.config.ts` (node env), `apps/web/vitest.config.ts` (jsdom env + `@vitejs/plugin-react`).
+- **File glob**: `src/**/*.{test,spec}.{ts,tsx}` — colocate tests next to source.
+- **Globals enabled**: `describe`, `it`, `expect` available without imports (but existing samples import them explicitly).
+- **Coverage**: `@vitest/coverage-v8` — run `pnpm --filter @ledger/api test:coverage` (or `--filter @ledger/web`).
+
+### Run
+
+```bash
+pnpm test                                    # both apps, in parallel
+pnpm --filter @ledger/api test               # single app
+pnpm --filter @ledger/web test:watch         # watch mode
+pnpm --filter @ledger/api test:coverage      # + coverage report
+```
+
+### Add a test
+
+Create `foo.test.ts` (or `.tsx` for React) next to the module. Example:
+
+```ts
+// apps/api/src/common/foo.test.ts
+import { describe, expect, it } from 'vitest';
+import { foo } from './foo';
+
+describe('foo', () => {
+  it('returns 42', () => {
+    expect(foo()).toBe(42);
+  });
+});
+```
+
+Existing samples to model against:
+- `apps/api/src/common/category-kind.test.ts` — pure unit test of `impactOf`
+- `apps/api/src/common/normalize.test.ts` — `normalizeDescription` + `buildFingerprint`
+- `apps/web/src/utils/format.test.ts` — `formatBRL` (uses `.replace(/\s/g, ' ')` to normalize NBSPs before matching, since ICU output varies)
+
+For React component tests, add `@testing-library/react` + `@testing-library/jest-dom` — not installed yet.
 
 ### Env
 
