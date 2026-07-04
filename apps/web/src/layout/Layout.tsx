@@ -8,6 +8,9 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { alpha, useTheme } from '@mui/material/styles';
 import DashboardOutlined from '@mui/icons-material/DashboardOutlined';
 import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
 import AccountBalanceOutlined from '@mui/icons-material/AccountBalanceOutlined';
@@ -19,6 +22,9 @@ import RuleOutlined from '@mui/icons-material/RuleOutlined';
 import UploadFileOutlined from '@mui/icons-material/UploadFileOutlined';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
 import WalletOutlined from '@mui/icons-material/WalletOutlined';
+import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
+import { useThemeMode } from '../theme-mode';
 
 const DRAWER_WIDTH = 236;
 
@@ -36,6 +42,18 @@ const NAV_ITEMS = [
 ];
 
 export function Layout() {
+  const theme = useTheme();
+  const { mode, toggleMode } = useThemeMode();
+  const isDark = mode === 'dark';
+
+  const drawerBg = isDark ? theme.palette.background.paper : '#FCFCFD';
+  const activeBg = isDark ? alpha(theme.palette.primary.main, 0.12) : '#EEF1F3';
+  const hoverBg = isDark ? alpha(theme.palette.primary.main, 0.06) : '#F2F4F6';
+  const idleFg = theme.palette.text.secondary;
+  const activeFg = theme.palette.text.primary;
+  const logoBg = isDark ? theme.palette.primary.main : '#11273A';
+  const logoFg = isDark ? theme.palette.primary.contrastText : '#FFFFFF';
+
   return (
     <Box sx={{ display: 'flex' }}>
       <Drawer
@@ -46,8 +64,8 @@ export function Layout() {
           [`& .MuiDrawer-paper`]: {
             width: DRAWER_WIDTH,
             boxSizing: 'border-box',
-            backgroundColor: '#FCFCFD',
-            borderRight: '1px solid #ECEEF0',
+            backgroundColor: drawerBg,
+            borderRight: `1px solid ${theme.palette.divider}`,
             padding: '18px 14px',
           },
         }}
@@ -62,8 +80,8 @@ export function Layout() {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '9px',
-              backgroundColor: '#11273A',
-              color: '#FFFFFF',
+              backgroundColor: logoBg,
+              color: logoFg,
             }}
           >
             <WalletOutlined sx={{ fontSize: 18 }} />
@@ -83,15 +101,15 @@ export function Layout() {
                 borderRadius: '9px',
                 py: 1,
                 px: 1.5,
-                color: '#6B7680',
-                '& .MuiListItemIcon-root': { color: '#6B7680', minWidth: 34 },
+                color: idleFg,
+                '& .MuiListItemIcon-root': { color: idleFg, minWidth: 34 },
                 '& .MuiListItemText-primary': { fontSize: 13.5, fontWeight: 600 },
                 '&.active': {
-                  backgroundColor: '#EEF1F3',
-                  color: '#16202A',
-                  '& .MuiListItemIcon-root': { color: '#16202A' },
+                  backgroundColor: activeBg,
+                  color: activeFg,
+                  '& .MuiListItemIcon-root': { color: activeFg },
                 },
-                '&:hover': { backgroundColor: '#F2F4F6' },
+                '&:hover': { backgroundColor: hoverBg },
               }}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
@@ -106,15 +124,22 @@ export function Layout() {
           direction="row"
           alignItems="center"
           spacing={1.25}
-          sx={{ px: 1, py: 1, borderTop: '1px solid #ECEEF0', mt: 1, pt: 2 }}
+          sx={{ px: 1, py: 1, borderTop: `1px solid ${theme.palette.divider}`, mt: 1, pt: 2 }}
         >
-          <Avatar sx={{ width: 32, height: 32, bgcolor: '#11273A', fontSize: 13, fontWeight: 700 }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: logoBg, color: logoFg, fontSize: 13, fontWeight: 700 }}>
             LG
           </Avatar>
-          <Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>Ledger</Typography>
-            <Typography sx={{ fontSize: 11.5, color: '#7A868E', lineHeight: 1.3 }}>Pessoal</Typography>
+            <Typography sx={{ fontSize: 11.5, color: theme.palette.text.secondary, lineHeight: 1.3 }}>
+              Pessoal
+            </Typography>
           </Box>
+          <Tooltip title={isDark ? 'Modo claro' : 'Modo escuro'}>
+            <IconButton size="small" onClick={toggleMode} sx={{ color: idleFg }}>
+              {isDark ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3.5, minHeight: '100vh' }}>
