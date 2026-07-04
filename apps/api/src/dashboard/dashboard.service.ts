@@ -3,6 +3,7 @@ import { AssetType, Direction } from '@ledger/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { AssetsService } from '../assets/assets.service';
+import { impactOf } from '../common/category-kind';
 
 @Injectable()
 export class DashboardService {
@@ -48,12 +49,13 @@ export class DashboardService {
 
     for (const tx of transactions) {
       const amount = Number(tx.amount);
-      if (tx.direction === Direction.INCOME && tx.impactsDashboardIncome) {
-        totalIncome += amount;
-      }
-      if (tx.direction === Direction.EXPENSE && tx.impactsDashboardExpense) {
-        totalExpense += amount;
+      const impact = impactOf(tx.category?.kind, tx.direction);
 
+      if (impact.addsToIncome && tx.impactsDashboardIncome) totalIncome += amount;
+      if (impact.addsToExpense && tx.impactsDashboardExpense) totalExpense += amount;
+      if (impact.subtractsFromExpense && tx.impactsDashboardExpense) totalExpense -= amount;
+
+      if (impact.addsToExpense && tx.impactsDashboardExpense) {
         const key = tx.categoryId ?? 'uncategorized';
         const categoryName = tx.category?.name ?? 'Sem categoria';
         const entry = byCategoryMap.get(key) ?? {
@@ -65,6 +67,7 @@ export class DashboardService {
         byCategoryMap.set(key, entry);
       }
     }
+    if (totalExpense < 0) totalExpense = 0;
 
     const [accounts, assets] = await Promise.all([
       this.accountsService.findAll(),

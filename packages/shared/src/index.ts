@@ -54,6 +54,14 @@ export enum AccountType {
   OTHER = 'OTHER',
 }
 
+export enum CategoryKind {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+  TRANSFER = 'TRANSFER',
+  INVESTMENT = 'INVESTMENT',
+  REIMBURSEMENT = 'REIMBURSEMENT',
+}
+
 export interface BankDto {
   id: string;
   name: string;
@@ -78,6 +86,7 @@ export interface AccountDto {
 export interface CategoryDto {
   id: string;
   name: string;
+  kind: CategoryKind;
   parentId: string | null;
   createdAt: string;
   updatedAt: string;

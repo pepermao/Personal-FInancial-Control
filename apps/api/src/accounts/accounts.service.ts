@@ -3,6 +3,7 @@ import { Direction } from '@ledger/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { impactOf } from '../common/category-kind';
 
 @Injectable()
 export class AccountsService {
@@ -41,21 +42,27 @@ export class AccountsService {
     return this.prisma.account.delete({ where: { id } });
   }
 
-  /** Sums income/expense transaction amounts per account in one query. */
+  /** Sums per-account net movement, respecting category.kind (TRANSFER/INVESTMENT ignored, REIMBURSEMENT adds back). */
   private async sumTransactionsByAccount(accountIds: string[]) {
-    const grouped = await this.prisma.transaction.groupBy({
-      by: ['accountId', 'direction'],
+    const txs = await this.prisma.transaction.findMany({
       where: { accountId: { in: accountIds }, impactsAccountBalance: true },
-      _sum: { amount: true },
+      select: {
+        accountId: true,
+        direction: true,
+        amount: true,
+        category: { select: { kind: true } },
+      },
     });
 
     const balances = new Map<string, { income: number; expense: number }>();
-    for (const row of grouped) {
-      const entry = balances.get(row.accountId) ?? { income: 0, expense: 0 };
-      const sum = Number(row._sum.amount ?? 0);
-      if (row.direction === Direction.INCOME) entry.income += sum;
-      else entry.expense += sum;
-      balances.set(row.accountId, entry);
+    for (const tx of txs) {
+      const impact = impactOf(tx.category?.kind, tx.direction);
+      if (!impact.affectsAccountBalance) continue;
+      const entry = balances.get(tx.accountId) ?? { income: 0, expense: 0 };
+      const amount = Number(tx.amount);
+      if (tx.direction === Direction.INCOME) entry.income += amount;
+      else entry.expense += amount;
+      balances.set(tx.accountId, entry);
     }
     return balances;
   }

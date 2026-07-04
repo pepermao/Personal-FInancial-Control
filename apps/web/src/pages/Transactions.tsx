@@ -14,9 +14,11 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { apiClient } from '../api/client';
-import type { ReclassifyResultDto, TransactionDto } from '@ledger/shared';
+import type { CategoryDto, ReclassifyResultDto, TransactionDto } from '@ledger/shared';
 import { Direction } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
@@ -36,9 +38,34 @@ async function fetchTransactions() {
   return data;
 }
 
+async function fetchCategories() {
+  const { data } = await apiClient.get<CategoryDto[]>('/categories');
+  return data;
+}
+
+async function updateTransactionCategory({ id, categoryId }: { id: string; categoryId: string | null }) {
+  const { data } = await apiClient.patch<TransactionDto>(`/transactions/${id}`, { categoryId });
+  return data;
+}
+
 async function reclassifyTransactions() {
   const { data } = await apiClient.post<ReclassifyResultDto>('/transactions/reclassify');
   return data;
+}
+
+interface CategoryOption {
+  id: string;
+  label: string;
+}
+
+function buildCategoryOptions(categories: CategoryDto[]): CategoryOption[] {
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  return categories
+    .map((c) => {
+      const parent = c.parentId ? byId.get(c.parentId) : undefined;
+      return { id: c.id, label: parent ? `${parent.name} › ${c.name}` : c.name };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 }
 
 export function TransactionsPage() {
@@ -47,7 +74,23 @@ export function TransactionsPage() {
     queryKey: ['transactions'],
     queryFn: fetchTransactions,
   });
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories,
+  });
+  const categoryOptions = categories ? buildCategoryOptions(categories) : [];
   const { page, rowsPerPage, paginate, handleChangePage, handleChangeRowsPerPage } = usePagination();
+
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: updateTransactionCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+    },
+    onSettled: () => setEditingCategoryId(null),
+  });
 
   const [periodType, setPeriodType] = useState<PeriodType>('year');
   const [year, setYear] = useState<string | undefined>(undefined);
@@ -154,7 +197,48 @@ export function TransactionsPage() {
                     <TableCell>{new Date(tx.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                     <TableCell>{tx.descriptionRaw}</TableCell>
                     <TableCell>{tx.account?.name ?? '-'}</TableCell>
-                    <TableCell>{tx.category?.name ?? '-'}</TableCell>
+                    <TableCell sx={{ minWidth: 220 }}>
+                      {editingCategoryId === tx.id ? (
+                        <Autocomplete
+                          size="small"
+                          open
+                          autoFocus
+                          openOnFocus
+                          options={categoryOptions}
+                          value={categoryOptions.find((o) => o.id === tx.categoryId) ?? null}
+                          onChange={(_, option) =>
+                            updateCategoryMutation.mutate({ id: tx.id, categoryId: option?.id ?? null })
+                          }
+                          onBlur={() => setEditingCategoryId(null)}
+                          getOptionLabel={(option) => option.label}
+                          isOptionEqualToValue={(o, v) => o.id === v.id}
+                          disabled={updateCategoryMutation.isPending}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              autoFocus
+                              placeholder="Buscar categoria..."
+                              variant="standard"
+                            />
+                          )}
+                          sx={{ '.MuiInput-root': { fontSize: 13 } }}
+                        />
+                      ) : (
+                        <Box
+                          onClick={() => setEditingCategoryId(tx.id)}
+                          sx={{
+                            cursor: 'pointer',
+                            py: 0.5,
+                            px: 1,
+                            borderRadius: 1,
+                            color: tx.category?.name ? 'inherit' : '#7A868E',
+                            '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
+                          }}
+                        >
+                          {tx.category?.name ?? 'Sem categoria'}
+                        </Box>
+                      )}
+                    </TableCell>
                     <TableCell align="right">R$ {tx.amount}</TableCell>
                     <TableCell>
                       <Chip

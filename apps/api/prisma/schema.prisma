@@ -63,6 +63,14 @@ enum AccountType {
   OTHER
 }
 
+enum CategoryKind {
+  INCOME
+  EXPENSE
+  TRANSFER
+  INVESTMENT
+  REIMBURSEMENT
+}
+
 model Bank {
   id        String    @id @default(uuid())
   name      String    @unique
@@ -94,6 +102,7 @@ model Account {
 model Category {
   id        String     @id @default(uuid())
   name      String
+  kind      CategoryKind @default(EXPENSE)
   parentId  String?
   parent    Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryToParent")
