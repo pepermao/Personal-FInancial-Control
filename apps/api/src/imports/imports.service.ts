@@ -124,7 +124,7 @@ export class ImportsService {
       }
 
       const match = rules.find((rule) =>
-        descriptionNormalized.includes(rule.pattern.toUpperCase()),
+        descriptionNormalized.includes(normalizeDescription(rule.pattern)),
       );
       if (!match) needsReview += 1;
 

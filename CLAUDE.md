@@ -59,7 +59,7 @@ Critical `Transaction` fields:
 3. For each row: normalize description → build fingerprint → skip if fingerprint exists (`duplicated++`) → find first matching rule ordered by priority → if none, `needsReview++` → insert transaction linked to the import batch.
 4. Amount sign determines `direction`: `>= 0 INCOME`, else `EXPENSE`. Stored amount is always positive (`Math.abs`).
 
-Rule matching in imports uses `descriptionNormalized.includes(rule.pattern.toUpperCase())` — patterns are case-insensitive substrings, not regex.
+Rule matching (in imports and in `POST /transactions/reclassify`) uses `descriptionNormalized.includes(normalizeDescription(rule.pattern))` — patterns are case- and accent-insensitive substrings, not regex. Both sides must go through `normalizeDescription` (NFD-strip + uppercase); comparing a raw/uppercased-only pattern against an accent-stripped description silently matches nothing.
 
 ### Web (React)
 

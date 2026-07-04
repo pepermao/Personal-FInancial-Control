@@ -92,7 +92,7 @@ export class TransactionsService {
 
     let updated = 0;
     for (const tx of transactions) {
-      const match = rules.find((rule) => tx.descriptionNormalized.includes(rule.pattern.toUpperCase()));
+      const match = rules.find((rule) => tx.descriptionNormalized.includes(normalizeDescription(rule.pattern)));
       if (!match) continue;
       if (match.categoryId === tx.categoryId && (match.subcategory ?? null) === (tx.subcategory ?? null)) {
         continue;
