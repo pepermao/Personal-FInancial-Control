@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
@@ -7,11 +8,10 @@ import Stack from '@mui/material/Stack';
 import LinearProgress from '@mui/material/LinearProgress';
 import { apiClient } from '../api/client';
 import type { DashboardSummaryDto } from '@ledger/shared';
+import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 
-async function fetchSummary(month: string) {
-  const { data } = await apiClient.get<DashboardSummaryDto>('/dashboard/summary', {
-    params: { month },
-  });
+async function fetchSummary(params: { year?: string; month?: string }) {
+  const { data } = await apiClient.get<DashboardSummaryDto>('/dashboard/summary', { params });
   return data;
 }
 
@@ -29,20 +29,52 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 }
 
 export function DashboardPage() {
-  const month = new Date().toISOString().slice(0, 7);
+  const [periodType, setPeriodType] = useState<PeriodType>('year');
+  const [year, setYear] = useState<string | undefined>(undefined);
+  const [month, setMonth] = useState<string | undefined>(undefined);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['dashboard-summary', month],
-    queryFn: () => fetchSummary(month),
+    queryKey: ['dashboard-summary', periodType, periodType === 'month' ? (month ?? 'default') : (year ?? 'default')],
+    queryFn: () => fetchSummary(periodType === 'month' ? { month } : { year }),
   });
 
   const maxCategoryTotal = data ? Math.max(1, ...data.byCategory.map((c) => Number(c.total))) : 1;
+  const minDate = data?.earliestMonth ? monthStringToDate(data.earliestMonth) : undefined;
+  const maxDate = new Date();
+
+  const handlePeriodTypeChange = (value: PeriodType) => {
+    if (value === periodType) return;
+    if (value === 'month' && !month) {
+      setMonth(data?.month ?? `${data?.year ?? maxDate.getFullYear()}-01`);
+    }
+    if (value === 'year' && !year && data?.year) {
+      setYear(data.year);
+    }
+    setPeriodType(value);
+  };
 
   return (
     <Box>
-      <Typography variant="h4">Painel</Typography>
-      <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
-        Sua posição financeira num relance
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
+        <Box>
+          <Typography variant="h4">Painel</Typography>
+          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
+            Sua posição financeira num relance
+          </Typography>
+        </Box>
+        {data && (
+          <PeriodPicker
+            periodType={periodType}
+            year={year ?? data.year}
+            month={month ?? data.month ?? `${data.year}-01`}
+            onPeriodTypeChange={handlePeriodTypeChange}
+            onYearChange={setYear}
+            onMonthChange={setMonth}
+            minDate={minDate}
+            maxDate={maxDate}
+          />
+        )}
+      </Stack>
 
       {isLoading && <Typography>Carregando...</Typography>}
       {isError && <Typography color="error">Não foi possível carregar o resumo.</Typography>}
@@ -50,17 +82,23 @@ export function DashboardPage() {
       {data && (
         <>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <KpiCard label="Renda mensal" value={`R$ ${data.totalIncome}`} />
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard label="Patrimônio líquido" value={`R$ ${data.netWorth}`} />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard label="Renda no período" value={`R$ ${data.totalIncome}`} />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
               <KpiCard label="Custo de vida" value={`R$ ${data.totalExpense}`} />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <KpiCard label="Fluxo de caixa" value={`R$ ${data.balance}`} />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <KpiCard label="Patrimônio líquido" value={`R$ ${data.netWorth}`} />
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard label="Investimentos" value={`R$ ${data.totalInvestments}`} />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard label="Imóveis" value={`R$ ${data.totalRealEstate}`} />
             </Grid>
           </Grid>
 
@@ -118,7 +156,7 @@ export function DashboardPage() {
                     </Box>
                   ))}
                   {data.byCategory.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma despesa este mês.</Typography>
+                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma despesa neste período.</Typography>
                   )}
                 </Stack>
               </Paper>

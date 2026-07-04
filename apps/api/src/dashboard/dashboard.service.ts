@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Direction } from '@ledger/shared';
+import { AssetType, Direction } from '@ledger/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { AssetsService } from '../assets/assets.service';
@@ -12,11 +12,33 @@ export class DashboardService {
     private readonly assetsService: AssetsService,
   ) {}
 
-  async summary(month?: string) {
-    const competenceMonth = month ?? new Date().toISOString().slice(0, 7);
+  async summary(month?: string, year?: string) {
+    const bounds = await this.prisma.transaction.aggregate({
+      _min: { competenceMonth: true },
+      _max: { competenceMonth: true },
+    });
+    const earliestMonth = bounds._min.competenceMonth ?? null;
+    const latestMonth = bounds._max.competenceMonth ?? null;
+
+    let periodType: 'month' | 'year';
+    let responseMonth: string | null;
+    let responseYear: string;
+    let competenceMonthFilter: { equals: string } | { startsWith: string };
+
+    if (month) {
+      periodType = 'month';
+      responseMonth = month;
+      responseYear = month.slice(0, 4);
+      competenceMonthFilter = { equals: month };
+    } else {
+      periodType = 'year';
+      responseMonth = null;
+      responseYear = year ?? latestMonth?.slice(0, 4) ?? new Date().getFullYear().toString();
+      competenceMonthFilter = { startsWith: `${responseYear}-` };
+    }
 
     const transactions = await this.prisma.transaction.findMany({
-      where: { competenceMonth },
+      where: { competenceMonth: competenceMonthFilter },
       include: { category: true },
     });
 
@@ -56,10 +78,20 @@ export class DashboardService {
       balance: account.currentBalance,
     }));
     const totalAccountsBalance = accounts.reduce((sum, a) => sum + Number(a.currentBalance), 0);
-    const totalAssetsValue = assets.reduce((sum, a) => sum + Number(a.value), 0);
+    const totalInvestments = assets
+      .filter((a) => a.type !== AssetType.REAL_ESTATE)
+      .reduce((sum, a) => sum + Number(a.value), 0);
+    const totalRealEstate = assets
+      .filter((a) => a.type === AssetType.REAL_ESTATE)
+      .reduce((sum, a) => sum + Number(a.value), 0);
+    const totalAssetsValue = totalInvestments + totalRealEstate;
 
     return {
-      month: competenceMonth,
+      periodType,
+      month: responseMonth,
+      year: responseYear,
+      earliestMonth,
+      latestMonth,
       totalIncome: totalIncome.toFixed(2),
       totalExpense: totalExpense.toFixed(2),
       balance: (totalIncome - totalExpense).toFixed(2),
@@ -68,6 +100,8 @@ export class DashboardService {
         .map((entry) => ({ ...entry, total: entry.total.toFixed(2) })),
       byAccount: byAccount.sort((a, b) => Number(b.balance) - Number(a.balance)),
       totalAccountsBalance: totalAccountsBalance.toFixed(2),
+      totalInvestments: totalInvestments.toFixed(2),
+      totalRealEstate: totalRealEstate.toFixed(2),
       totalAssetsValue: totalAssetsValue.toFixed(2),
       netWorth: (totalAccountsBalance + totalAssetsValue).toFixed(2),
     };

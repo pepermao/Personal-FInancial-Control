@@ -8,6 +8,6 @@ export class DashboardController {
 
   @Get('summary')
   summary(@Query() query: DashboardSummaryQueryDto) {
-    return this.dashboardService.summary(query.month);
+    return this.dashboardService.summary(query.month, query.year);
   }
 }

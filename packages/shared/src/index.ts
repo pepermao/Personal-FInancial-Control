@@ -156,13 +156,19 @@ export interface ImportSummaryDto {
 }
 
 export interface DashboardSummaryDto {
-  month: string;
+  periodType: 'month' | 'year';
+  month: string | null;
+  year: string;
+  earliestMonth: string | null;
+  latestMonth: string | null;
   totalIncome: string;
   totalExpense: string;
   balance: string;
   byCategory: Array<{ categoryId: string | null; categoryName: string; total: string }>;
   byAccount: Array<{ accountId: string; accountName: string; bankName: string; balance: string }>;
   totalAccountsBalance: string;
+  totalInvestments: string;
+  totalRealEstate: string;
   totalAssetsValue: string;
   netWorth: string;
 }
