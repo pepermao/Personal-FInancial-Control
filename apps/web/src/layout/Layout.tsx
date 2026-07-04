@@ -12,6 +12,8 @@ import DashboardOutlined from '@mui/icons-material/DashboardOutlined';
 import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
 import AccountBalanceOutlined from '@mui/icons-material/AccountBalanceOutlined';
 import SavingsOutlined from '@mui/icons-material/SavingsOutlined';
+import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';
+import ApartmentOutlined from '@mui/icons-material/ApartmentOutlined';
 import CategoryOutlined from '@mui/icons-material/CategoryOutlined';
 import RuleOutlined from '@mui/icons-material/RuleOutlined';
 import UploadFileOutlined from '@mui/icons-material/UploadFileOutlined';
@@ -25,6 +27,8 @@ const NAV_ITEMS = [
   { label: 'Transações', to: '/transactions', icon: <ReceiptLongOutlined /> },
   { label: 'Contas', to: '/accounts', icon: <AccountBalanceOutlined /> },
   { label: 'Ativos', to: '/assets', icon: <SavingsOutlined /> },
+  { label: 'Investimentos', to: '/investments', icon: <TrendingUpOutlined /> },
+  { label: 'Imóveis', to: '/real-estate', icon: <ApartmentOutlined /> },
   { label: 'Categorias', to: '/categories', icon: <CategoryOutlined /> },
   { label: 'Regras', to: '/rules', icon: <RuleOutlined /> },
   { label: 'Importações', to: '/imports', icon: <UploadFileOutlined /> },

@@ -4,6 +4,8 @@ import { DashboardPage } from './pages/Dashboard';
 import { TransactionsPage } from './pages/Transactions';
 import { AccountsPage } from './pages/Accounts';
 import { AssetsPage } from './pages/Assets';
+import { InvestmentsPage } from './pages/Investments';
+import { RealEstatePage } from './pages/RealEstate';
 import { CategoriesPage } from './pages/Categories';
 import { RulesPage } from './pages/Rules';
 import { ImportsPage } from './pages/Imports';
@@ -18,6 +20,8 @@ export function App() {
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="assets" element={<AssetsPage />} />
+        <Route path="investments" element={<InvestmentsPage />} />
+        <Route path="real-estate" element={<RealEstatePage />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="rules" element={<RulesPage />} />
         <Route path="imports" element={<ImportsPage />} />
