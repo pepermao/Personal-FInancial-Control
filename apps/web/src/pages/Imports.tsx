@@ -117,9 +117,24 @@ export function ImportsPage() {
           </Button>
 
           {mutation.isSuccess && (
-            <Alert severity={mutation.data.historical ? 'info' : 'success'}>
+            <Alert
+              severity={
+                mutation.data.imported === 0 && mutation.data.duplicated === 0 && mutation.data.skipped > 0
+                  ? 'warning'
+                  : mutation.data.historical
+                    ? 'info'
+                    : 'success'
+              }
+            >
               {mutation.data.imported} importada(s), {mutation.data.duplicated} duplicada(s),{' '}
               {mutation.data.needsReview} para revisar.
+              {mutation.data.skipped > 0 && (
+                <>
+                  {' '}
+                  {mutation.data.skipped} linha(s) ignorada(s) (colunas ausentes, data/valor inválido, ou linhas de
+                  saldo que não são transações).
+                </>
+              )}
               {mutation.data.historical && (
                 <>
                   {' '}

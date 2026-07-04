@@ -4,18 +4,33 @@ import { Direction, TransactionNature } from '@ledger/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClassificationRulesService } from '../classification-rules/classification-rules.service';
 import { buildFingerprint, normalizeDescription } from '../common/normalize';
-import { parseCsvAmount, parseCsvDate, pickAmount, pickDate, pickDescription } from '../common/csv-parsing';
+import {
+  parseCsvAmount,
+  parseCsvDate,
+  pickAmount,
+  pickCategory,
+  pickDate,
+  pickDescription,
+} from '../common/csv-parsing';
 
 interface CsvRow {
   date?: string;
   description?: string;
   amount?: string;
+  category?: string;
+}
+
+/** Some statements (e.g. Itaú) mix in daily balance snapshot rows tagged as "not a transaction". */
+function isNonTransactionRow(category: string | undefined): boolean {
+  if (!category) return false;
+  return normalizeDescription(category).includes('NAO E TRANSACAO');
 }
 
 export interface ImportResult {
   imported: number;
   duplicated: number;
   needsReview: number;
+  skipped: number;
   historical: boolean;
 }
 
@@ -85,6 +100,12 @@ export class ImportsService {
 
     for (const [index, row] of rows.entries()) {
       const rowNumber = index + 2; // +1 for header, +1 for 1-based line numbers
+
+      if (isNonTransactionRow(row.category)) {
+        this.logger.debug(`Row ${rowNumber}: balance snapshot row ("${row.category}"), skipping`);
+        skipped += 1;
+        continue;
+      }
 
       if (!row.date || !row.description || !row.amount) {
         this.logger.warn(
@@ -162,7 +183,7 @@ export class ImportsService {
       `Import "${filename}" finished: imported=${imported} duplicated=${duplicated} needsReview=${needsReview} skipped=${skipped} historical=${historical}`,
     );
 
-    return { imported, duplicated, needsReview, historical };
+    return { imported, duplicated, needsReview, skipped, historical };
   }
 
   private maxValidDate(rows: CsvRow[]): Date | null {
@@ -197,6 +218,7 @@ export class ImportsService {
       date: pickDate(record),
       description: pickDescription(record),
       amount: pickAmount(record),
+      category: pickCategory(record),
     }));
   }
 }

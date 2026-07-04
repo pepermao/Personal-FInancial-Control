@@ -161,6 +161,7 @@ export interface ImportSummaryDto {
   imported: number;
   duplicated: number;
   needsReview: number;
+  skipped: number;
   historical: boolean;
 }
 
