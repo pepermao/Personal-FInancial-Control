@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Direction {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  PIX
+  CARD
+  BOLETO
+  TRANSFER
+  RDB
+  FEE
+  TAX
+  OTHER
+}
+
+enum TransactionNature {
+  INCOME
+  EXPENSE
+  INTERNAL_TRANSFER
+  INVESTMENT
+  REDEMPTION
+  REIMBURSEMENT
+}
+
+enum AssetType {
+  CASH
+  RDB
+  INVESTMENT
+  REAL_ESTATE
+  OTHER
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  INVESTMENT
+  OTHER
+}
+
+model Bank {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  accounts  Account[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("banks")
+}
+
+model Account {
+  id             String        @id @default(uuid())
+  bankId         String
+  bank           Bank          @relation(fields: [bankId], references: [id])
+  name           String
+  type           AccountType   @default(CHECKING)
+  accountNumber  String?
+  initialBalance Decimal       @default(0) @db.Decimal(14, 2)
+  notes          String?
+  transactions   Transaction[]
+  importBatches  ImportBatch[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([bankId, name])
+  @@map("accounts")
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToParent")
+  rules     ClassificationRule[]
+  transactions Transaction[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("categories")
+}
+
+model ClassificationRule {
+  id          String   @id @default(uuid())
+  pattern     String
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  subcategory String?
+  priority    Int      @default(100)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("classification_rules")
+}
+
+model Transaction {
+  id                      String            @id @default(uuid())
+  accountId               String
+  account                 Account           @relation(fields: [accountId], references: [id])
+  date                    DateTime
+  competenceMonth         String
+  descriptionRaw          String
+  descriptionNormalized   String
+  amount                  Decimal           @db.Decimal(14, 2)
+  direction               Direction
+  type                    TransactionType   @default(OTHER)
+  counterparty            String?
+  categoryId              String?
+  category                Category?         @relation(fields: [categoryId], references: [id])
+  subcategory             String?
+  nature                  TransactionNature @default(EXPENSE)
+  impactsDashboardIncome  Boolean           @default(true)
+  impactsDashboardExpense Boolean           @default(true)
+  impactsAccountBalance   Boolean           @default(true)
+  fingerprint             String            @unique
+  importBatchId           String?
+  importBatch             ImportBatch?      @relation(fields: [importBatchId], references: [id])
+  notes                   String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([competenceMonth])
+  @@map("transactions")
+}
+
+model Asset {
+  id        String    @id @default(uuid())
+  name      String
+  type      AssetType
+  value     Decimal   @db.Decimal(14, 2)
+  date      DateTime  @default(now())
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("assets")
+}
+
+model ImportBatch {
+  id            String        @id @default(uuid())
+  filename      String
+  accountId     String
+  account       Account       @relation(fields: [accountId], references: [id])
+  imported      Int           @default(0)
+  duplicated    Int           @default(0)
+  needsReview   Int           @default(0)
+  historical    Boolean       @default(false)
+  endBalance    Decimal?      @db.Decimal(14, 2)
+  transactions  Transaction[]
+  createdAt     DateTime      @default(now())
+
+  @@map("import_batches")
+}
