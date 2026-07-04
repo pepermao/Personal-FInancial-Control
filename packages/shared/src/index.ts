@@ -165,6 +165,21 @@ export interface ImportSummaryDto {
   historical: boolean;
 }
 
+export interface BulkImportResultItem {
+  filename: string;
+  ok: boolean;
+  imported?: number;
+  duplicated?: number;
+  needsReview?: number;
+  skipped?: number;
+  historical?: boolean;
+  error?: string;
+}
+
+export interface BulkImportResultDto {
+  results: BulkImportResultItem[];
+}
+
 export interface DashboardSummaryDto {
   periodType: 'month' | 'year';
   month: string | null;
