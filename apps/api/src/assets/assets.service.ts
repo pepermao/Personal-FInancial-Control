@@ -7,8 +7,11 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 export class AssetsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.asset.findMany({ orderBy: { date: 'desc' } });
+  findAll(cutoff?: Date) {
+    return this.prisma.asset.findMany({
+      where: cutoff ? { date: { lte: cutoff } } : undefined,
+      orderBy: { date: 'desc' },
+    });
   }
 
   async findOne(id: string) {

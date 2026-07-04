@@ -31,7 +31,9 @@ export function impactOf(
       return { addsToIncome: false, addsToExpense: true, subtractsFromExpense: false, affectsAccountBalance: true };
     case CategoryKind.TRANSFER:
     case CategoryKind.INVESTMENT:
-      return { addsToIncome: false, addsToExpense: false, subtractsFromExpense: false, affectsAccountBalance: false };
+      // Money physically leaves/enters the account — matches bank statement.
+      // Dashboard income/expense stays untouched (it's not consumption).
+      return { addsToIncome: false, addsToExpense: false, subtractsFromExpense: false, affectsAccountBalance: true };
     case CategoryKind.REIMBURSEMENT:
       return { addsToIncome: false, addsToExpense: false, subtractsFromExpense: true, affectsAccountBalance: true };
     default:

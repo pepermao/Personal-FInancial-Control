@@ -5,6 +5,16 @@ import { AccountsService } from '../accounts/accounts.service';
 import { AssetsService } from '../assets/assets.service';
 import { impactOf } from '../common/category-kind';
 
+function endOfMonth(yyyyMm: string): Date {
+  const [y, m] = yyyyMm.split('-').map(Number);
+  // Day 0 of next month = last day of this month. UTC to avoid TZ drift.
+  return new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
+}
+
+function endOfYear(yyyy: string): Date {
+  return new Date(Date.UTC(Number(yyyy), 11, 31, 23, 59, 59, 999));
+}
+
 @Injectable()
 export class DashboardService {
   constructor(
@@ -69,8 +79,14 @@ export class DashboardService {
     }
     if (totalExpense < 0) totalExpense = 0;
 
+    const cutoff = periodType === 'month'
+      ? endOfMonth(responseMonth!)
+      : endOfYear(responseYear);
+
+    // Accounts are scoped by tx date up to period end. Assets stay as latest known snapshot
+    // (personal finance apps treat them as a current position, not a per-period timeline).
     const [accounts, assets] = await Promise.all([
-      this.accountsService.findAll(),
+      this.accountsService.findAll(cutoff),
       this.assetsService.findAll(),
     ]);
 

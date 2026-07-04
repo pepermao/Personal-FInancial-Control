@@ -9,12 +9,12 @@ import { impactOf } from '../common/category-kind';
 export class AccountsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(cutoff?: Date) {
     const accounts = await this.prisma.account.findMany({
       include: { bank: true },
       orderBy: { name: 'asc' },
     });
-    const balances = await this.sumTransactionsByAccount(accounts.map((a) => a.id));
+    const balances = await this.sumTransactionsByAccount(accounts.map((a) => a.id), cutoff);
     return accounts.map((account) => this.withCurrentBalance(account, balances));
   }
 
@@ -42,10 +42,14 @@ export class AccountsService {
     return this.prisma.account.delete({ where: { id } });
   }
 
-  /** Sums per-account net movement, respecting category.kind (TRANSFER/INVESTMENT ignored, REIMBURSEMENT adds back). */
-  private async sumTransactionsByAccount(accountIds: string[]) {
+  /** Sums per-account net movement, respecting category.kind. Optional date cutoff (inclusive). */
+  private async sumTransactionsByAccount(accountIds: string[], cutoff?: Date) {
     const txs = await this.prisma.transaction.findMany({
-      where: { accountId: { in: accountIds }, impactsAccountBalance: true },
+      where: {
+        accountId: { in: accountIds },
+        impactsAccountBalance: true,
+        ...(cutoff ? { date: { lte: cutoff } } : {}),
+      },
       select: {
         accountId: true,
         direction: true,

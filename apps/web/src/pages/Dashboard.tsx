@@ -125,6 +125,9 @@ export function DashboardPage() {
               <KpiCard label="Patrimônio líquido" value={`R$ ${data.netWorth}`} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
+              <KpiCard label="Total em contas" value={`R$ ${data.totalAccountsBalance}`} />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
               <KpiCard label="Renda no período" value={`R$ ${data.totalIncome}`} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
