@@ -6,12 +6,20 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import LinearProgress from '@mui/material/LinearProgress';
+import { BarChart } from '@mui/x-charts/BarChart';
 import { apiClient } from '../api/client';
-import type { DashboardSummaryDto } from '@ledger/shared';
+import type { CashFlowDto, DashboardSummaryDto } from '@ledger/shared';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
+
+const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 async function fetchSummary(params: { year?: string; month?: string }) {
   const { data } = await apiClient.get<DashboardSummaryDto>('/dashboard/summary', { params });
+  return data;
+}
+
+async function fetchCashFlow(params: { year?: string; month?: string }) {
+  const { data } = await apiClient.get<CashFlowDto>('/dashboard/cash-flow', { params });
   return data;
 }
 
@@ -38,7 +46,18 @@ export function DashboardPage() {
     queryFn: () => fetchSummary(periodType === 'month' ? { month } : { year }),
   });
 
+  const { data: cashFlow } = useQuery({
+    queryKey: ['dashboard-cash-flow', periodType, periodType === 'month' ? (month ?? 'default') : (year ?? 'default')],
+    queryFn: () => fetchCashFlow(periodType === 'month' ? { month } : { year }),
+    enabled: Boolean(data),
+  });
+
   const maxCategoryTotal = data ? Math.max(1, ...data.byCategory.map((c) => Number(c.total))) : 1;
+  const cashFlowLabels = cashFlow
+    ? cashFlow.series.map((point) =>
+        cashFlow.granularity === 'month' ? MONTH_LABELS[Number(point.label) - 1] : String(Number(point.label)),
+      )
+    : [];
   const minDate = data?.earliestMonth ? monthStringToDate(data.earliestMonth) : undefined;
   const maxDate = new Date();
 
@@ -102,32 +121,77 @@ export function DashboardPage() {
             </Grid>
           </Grid>
 
+          {cashFlow && (
+            <Paper sx={{ p: 2.5, mt: 2 }}>
+              <Typography variant="h6" sx={{ fontSize: 16, mb: 1 }}>
+                {cashFlow.granularity === 'day' ? 'Fluxo de caixa diário' : 'Fluxo de caixa mensal'}
+              </Typography>
+              <BarChart
+                height={280}
+                series={[
+                  {
+                    data: cashFlow.series.map((point) => Number(point.income) - Number(point.expense)),
+                    label: 'Resultado',
+                  },
+                ]}
+                xAxis={
+                  [
+                    {
+                      data: cashFlowLabels,
+                      scaleType: 'band',
+                      categoryGapRatio: 0.1,
+                    },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ] as any
+                }
+                yAxis={
+                  [
+                    {
+                      colorMap: {
+                        type: 'piecewise',
+                        thresholds: [0],
+                        colors: ['#C7443F', '#0E9D63'],
+                      },
+                    },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ] as any
+                }
+                grid={{ horizontal: true }}
+                slotProps={{ legend: { hidden: true } }}
+              />
+            </Paper>
+          )}
+
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2.5, height: '100%' }}>
-                <Typography variant="h6" sx={{ fontSize: 16, mb: 2 }}>
-                  Contas
+                <Typography variant="h6" sx={{ fontSize: 16, mb: 1 }}>
+                  Receitas vs. despesas
                 </Typography>
-                <Stack divider={<Box sx={{ borderBottom: '1px solid #F1F3F5' }} />} spacing={1.25}>
-                  {data.byAccount.map((account) => (
-                    <Stack
-                      key={account.accountId}
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      sx={{ py: 0.5 }}
-                    >
-                      <Box>
-                        <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{account.accountName}</Typography>
-                        <Typography sx={{ fontSize: 12, color: '#7A868E' }}>{account.bankName}</Typography>
-                      </Box>
-                      <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>R$ {account.balance}</Typography>
-                    </Stack>
-                  ))}
-                  {data.byAccount.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma conta ainda.</Typography>
-                  )}
-                </Stack>
+                {cashFlow && (
+                  <BarChart
+                    height={280}
+                    series={[
+                      {
+                        data: cashFlow.series.map((point) => Number(point.income)),
+                        label: 'Receita',
+                        color: '#0E9D63',
+                      },
+                      {
+                        data: cashFlow.series.map((point) => Number(point.expense)),
+                        label: 'Despesa',
+                        color: '#C7443F',
+                      },
+                    ]}
+                    xAxis={[
+                      {
+                        data: cashFlowLabels,
+                        scaleType: 'band',
+                      },
+                    ]}
+                    grid={{ horizontal: true }}
+                  />
+                )}
               </Paper>
             </Grid>
 
@@ -162,6 +226,32 @@ export function DashboardPage() {
               </Paper>
             </Grid>
           </Grid>
+
+          <Paper sx={{ p: 2.5, mt: 2 }}>
+            <Typography variant="h6" sx={{ fontSize: 16, mb: 2 }}>
+              Contas
+            </Typography>
+            <Stack divider={<Box sx={{ borderBottom: '1px solid #F1F3F5' }} />} spacing={1.25}>
+              {data.byAccount.map((account) => (
+                <Stack
+                  key={account.accountId}
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ py: 0.5 }}
+                >
+                  <Box>
+                    <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{account.accountName}</Typography>
+                    <Typography sx={{ fontSize: 12, color: '#7A868E' }}>{account.bankName}</Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>R$ {account.balance}</Typography>
+                </Stack>
+              ))}
+              {data.byAccount.length === 0 && (
+                <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma conta ainda.</Typography>
+              )}
+            </Stack>
+          </Paper>
         </>
       )}
     </Box>

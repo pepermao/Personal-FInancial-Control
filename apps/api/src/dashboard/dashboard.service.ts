@@ -106,4 +106,59 @@ export class DashboardService {
       netWorth: (totalAccountsBalance + totalAssetsValue).toFixed(2),
     };
   }
+
+  /** Monthly buckets (Jan-Dec) for a year, or daily buckets (1-31) for a specific month. */
+  async cashFlow(month?: string, year?: string) {
+    if (month) {
+      const [y, m] = month.split('-').map(Number);
+      const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      const transactions = await this.prisma.transaction.findMany({ where: { competenceMonth: month } });
+
+      const buckets = new Map<number, { income: number; expense: number }>();
+      for (let day = 1; day <= daysInMonth; day++) buckets.set(day, { income: 0, expense: 0 });
+
+      for (const tx of transactions) {
+        const entry = buckets.get(new Date(tx.date).getUTCDate());
+        if (!entry) continue;
+        const amount = Number(tx.amount);
+        if (tx.direction === Direction.INCOME && tx.impactsDashboardIncome) entry.income += amount;
+        if (tx.direction === Direction.EXPENSE && tx.impactsDashboardExpense) entry.expense += amount;
+      }
+
+      return {
+        granularity: 'day' as const,
+        series: Array.from(buckets.entries()).map(([day, v]) => ({
+          label: String(day).padStart(2, '0'),
+          income: v.income.toFixed(2),
+          expense: v.expense.toFixed(2),
+        })),
+      };
+    }
+
+    const bounds = await this.prisma.transaction.aggregate({ _max: { competenceMonth: true } });
+    const responseYear = year ?? bounds._max.competenceMonth?.slice(0, 4) ?? new Date().getFullYear().toString();
+    const transactions = await this.prisma.transaction.findMany({
+      where: { competenceMonth: { startsWith: `${responseYear}-` } },
+    });
+
+    const buckets = new Map<string, { income: number; expense: number }>();
+    for (let m = 1; m <= 12; m++) buckets.set(String(m).padStart(2, '0'), { income: 0, expense: 0 });
+
+    for (const tx of transactions) {
+      const entry = buckets.get(tx.competenceMonth.slice(5, 7));
+      if (!entry) continue;
+      const amount = Number(tx.amount);
+      if (tx.direction === Direction.INCOME && tx.impactsDashboardIncome) entry.income += amount;
+      if (tx.direction === Direction.EXPENSE && tx.impactsDashboardExpense) entry.expense += amount;
+    }
+
+    return {
+      granularity: 'month' as const,
+      series: Array.from(buckets.entries()).map(([monthKey, v]) => ({
+        label: monthKey,
+        income: v.income.toFixed(2),
+        expense: v.expense.toFixed(2),
+      })),
+    };
+  }
 }

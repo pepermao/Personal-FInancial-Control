@@ -10,4 +10,9 @@ export class DashboardController {
   summary(@Query() query: DashboardSummaryQueryDto) {
     return this.dashboardService.summary(query.month, query.year);
   }
+
+  @Get('cash-flow')
+  cashFlow(@Query() query: DashboardSummaryQueryDto) {
+    return this.dashboardService.cashFlow(query.month, query.year);
+  }
 }

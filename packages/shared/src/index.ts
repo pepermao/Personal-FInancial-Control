@@ -172,3 +172,15 @@ export interface DashboardSummaryDto {
   totalAssetsValue: string;
   netWorth: string;
 }
+
+export interface CashFlowPointDto {
+  /** "01"-"12" for monthly granularity, "01"-"31" for daily granularity. */
+  label: string;
+  income: string;
+  expense: string;
+}
+
+export interface CashFlowDto {
+  granularity: 'month' | 'day';
+  series: CashFlowPointDto[];
+}
