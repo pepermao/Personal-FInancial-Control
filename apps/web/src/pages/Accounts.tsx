@@ -20,6 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { apiClient } from '../api/client';
+import { formatBRL } from '../utils/format';
 import { AccountType } from '@ledger/shared';
 import type { AccountDto, BankDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
@@ -187,7 +188,7 @@ export function AccountsPage() {
                         color: negative ? 'error.main' : 'text.primary',
                       }}
                     >
-                      R$ {account.currentBalance}
+                      {formatBRL(account.currentBalance)}
                     </Typography>
                     <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
                       <IconButton size="small" onClick={() => openEditDialog(account)}>

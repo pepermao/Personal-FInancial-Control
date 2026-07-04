@@ -26,6 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Alert from '@mui/material/Alert';
 import { apiClient } from '../api/client';
 import { CategoryKind, Direction } from '@ledger/shared';
+import { formatBRL } from '../utils/format';
 import type { CategoryDto, TransactionDto } from '@ledger/shared';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 
@@ -261,7 +262,7 @@ export function CategoriesPage() {
                       </Box>
                     </Stack>
                     <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', mt: 1.5 }}>
-                      {total ? `R$ ${total.toFixed(2)}` : 'R$ 0.00'}
+                      {formatBRL(total ?? 0)}
                     </Typography>
                     {!total && (
                       <Typography sx={{ fontSize: 12, color: '#7A868E', mt: 0.5 }}>

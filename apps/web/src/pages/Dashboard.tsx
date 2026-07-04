@@ -13,6 +13,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { apiClient } from '../api/client';
 import type { CashFlowDto, DashboardSummaryDto, NetWorthHistoryDto } from '@ledger/shared';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
+import { formatBRL } from '../utils/format';
 
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -122,25 +123,25 @@ export function DashboardPage() {
         <>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Patrimônio líquido" value={`R$ ${data.netWorth}`} />
+              <KpiCard label="Patrimônio líquido" value={formatBRL(data.netWorth)} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Total em contas" value={`R$ ${data.totalAccountsBalance}`} />
+              <KpiCard label="Total em contas" value={formatBRL(data.totalAccountsBalance)} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Renda no período" value={`R$ ${data.totalIncome}`} />
+              <KpiCard label="Renda no período" value={formatBRL(data.totalIncome)} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Custo de vida" value={`R$ ${data.totalExpense}`} />
+              <KpiCard label="Custo de vida" value={formatBRL(data.totalExpense)} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Fluxo de caixa" value={`R$ ${data.balance}`} />
+              <KpiCard label="Fluxo de caixa" value={formatBRL(data.balance)} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Investimentos" value={`R$ ${data.totalInvestments}`} />
+              <KpiCard label="Investimentos" value={formatBRL(data.totalInvestments)} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Imóveis" value={`R$ ${data.totalRealEstate}`} />
+              <KpiCard label="Imóveis" value={formatBRL(data.totalRealEstate)} />
             </Grid>
           </Grid>
 
@@ -150,7 +151,7 @@ export function DashboardPage() {
                 Patrimônio líquido
               </Typography>
               <Typography sx={{ fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em', mt: 0.5 }}>
-                R$ {netWorthValues[netWorthValues.length - 1].toFixed(2)}
+                {formatBRL(netWorthValues[netWorthValues.length - 1])}
               </Typography>
               <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
                 {netWorthChange >= 0 ? (
@@ -159,7 +160,7 @@ export function DashboardPage() {
                   <ArrowDownwardIcon sx={{ fontSize: 14, color: '#C7443F' }} />
                 )}
                 <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: netWorthChange >= 0 ? '#0E9D63' : '#C7443F' }}>
-                  R$ {Math.abs(netWorthChange).toFixed(2)}
+                  {formatBRL(Math.abs(netWorthChange))}
                 </Typography>
                 <Typography sx={{ fontSize: 12.5, color: '#7A868E' }}>nos últimos 12 meses</Typography>
               </Stack>
@@ -265,7 +266,7 @@ export function DashboardPage() {
                     <Box key={category.categoryId ?? 'uncategorized'}>
                       <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{category.categoryName}</Typography>
-                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>R$ {category.total}</Typography>
+                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{formatBRL(category.total)}</Typography>
                       </Stack>
                       <LinearProgress
                         variant="determinate"
@@ -304,7 +305,7 @@ export function DashboardPage() {
                     <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{account.accountName}</Typography>
                     <Typography sx={{ fontSize: 12, color: '#7A868E' }}>{account.bankName}</Typography>
                   </Box>
-                  <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>R$ {account.balance}</Typography>
+                  <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{formatBRL(account.balance)}</Typography>
                 </Stack>
               ))}
               {data.byAccount.length === 0 && (

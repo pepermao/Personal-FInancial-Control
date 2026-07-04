@@ -19,6 +19,7 @@ import { apiClient } from '../api/client';
 import { AssetType, ProfitRateType } from '@ledger/shared';
 import type { AssetDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
+import { formatBRL } from '../utils/format';
 import {
   ASSET_TYPE_LABELS,
   AssetCard,
@@ -154,7 +155,7 @@ export function InvestmentsPage() {
       {data && (
         <>
           <Typography sx={{ fontSize: 13, color: '#7A868E', mb: 2 }}>
-            Total investido: R$ {sumValue(investments).toFixed(2)}
+            Total investido: {formatBRL(sumValue(investments))}
           </Typography>
 
           <Grid container spacing={2}>

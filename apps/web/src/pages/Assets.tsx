@@ -10,6 +10,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import { apiClient } from '../api/client';
 import type { AssetDto } from '@ledger/shared';
 import { ASSET_TYPE_LABELS, isRealEstate, sumValue } from '../lib/assetDisplay';
+import { formatBRL } from '../utils/format';
 
 async function fetchAssets() {
   const { data } = await apiClient.get<AssetDto[]>('/assets');
@@ -61,13 +62,13 @@ export function AssetsPage() {
         <>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
-              <KpiCard label="Investimentos" value={`R$ ${totalInvestments.toFixed(2)}`} />
+              <KpiCard label="Investimentos" value={formatBRL(totalInvestments)} />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <KpiCard label="Imóveis" value={`R$ ${totalRealEstate.toFixed(2)}`} />
+              <KpiCard label="Imóveis" value={formatBRL(totalRealEstate)} />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <KpiCard label="Patrimônio total" value={`R$ ${totalAssets.toFixed(2)}`} />
+              <KpiCard label="Patrimônio total" value={formatBRL(totalAssets)} />
             </Grid>
           </Grid>
 
@@ -87,7 +88,7 @@ export function AssetsPage() {
                     <Box key={entry.type}>
                       <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{entry.label}</Typography>
-                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>R$ {entry.total.toFixed(2)}</Typography>
+                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{formatBRL(entry.total)}</Typography>
                       </Stack>
                       <LinearProgress
                         variant="determinate"
@@ -122,7 +123,7 @@ export function AssetsPage() {
                   {realEstate.map((asset) => (
                     <Stack key={asset.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.5 }}>
                       <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{asset.name}</Typography>
-                      <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>R$ {asset.value}</Typography>
+                      <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{formatBRL(asset.value)}</Typography>
                     </Stack>
                   ))}
                   {realEstate.length === 0 && (

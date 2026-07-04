@@ -61,13 +61,23 @@ export function ImportsPage() {
   });
 
   return (
-    <Box>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        maxWidth: 520,
+        mx: 'auto',
+        mt: { xs: 4, md: 8 },
+      }}
+    >
       <Typography variant="h4">Importações</Typography>
-      <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
+      <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5, mb: 3 }}>
         Envie um extrato bancário em CSV para adicionar transações
       </Typography>
 
-      <Paper sx={{ p: 3, maxWidth: 480 }}>
+      <Paper sx={{ p: 3, width: '100%', textAlign: 'left' }}>
         <Stack spacing={2}>
           <TextField
             select

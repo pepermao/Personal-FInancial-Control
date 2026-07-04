@@ -19,6 +19,7 @@ import { AssetType, ProfitRateType } from '@ledger/shared';
 import type { AssetDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
 import { AssetCard, isRealEstate, sumValue } from '../lib/assetDisplay';
+import { formatBRL } from '../utils/format';
 
 interface RealEstateFormState {
   id?: string;
@@ -133,7 +134,7 @@ export function RealEstatePage() {
       {data && (
         <>
           <Typography sx={{ fontSize: 13, color: '#7A868E', mb: 2 }}>
-            Valor total: R$ {sumValue(realEstate).toFixed(2)}
+            Valor total: {formatBRL(sumValue(realEstate))}
           </Typography>
 
           <Grid container spacing={2}>

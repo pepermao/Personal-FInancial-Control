@@ -118,7 +118,7 @@ model ClassificationRule {
   id          String   @id @default(uuid())
   pattern     String
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   subcategory String?
   priority    Int      @default(100)
   active      Boolean  @default(true)
@@ -141,7 +141,7 @@ model Transaction {
   type                    TransactionType   @default(OTHER)
   counterparty            String?
   categoryId              String?
-  category                Category?         @relation(fields: [categoryId], references: [id])
+  category                Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   subcategory             String?
   nature                  TransactionNature @default(EXPENSE)
   impactsDashboardIncome  Boolean           @default(true)

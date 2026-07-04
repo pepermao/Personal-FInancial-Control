@@ -8,6 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { AssetType, ProfitRateType } from '@ledger/shared';
 import type { AssetDto } from '@ledger/shared';
+import { formatBRL } from '../utils/format';
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   [AssetType.CDB]: 'CDB',
@@ -103,7 +104,7 @@ export function AssetCard({
         />
       </Stack>
       <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', mt: 2 }}>
-        R$ {asset.value}
+        {formatBRL(asset.value)}
       </Typography>
       {rateLabel && (
         <Typography sx={{ fontSize: 12, color: '#0E9D63', fontWeight: 700, mt: 0.5 }}>{rateLabel}</Typography>
