@@ -50,7 +50,7 @@ export function ImportsPage() {
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (!accountId || !file) throw new Error('Select an account and a CSV file');
+      if (!accountId || !file) throw new Error('Selecione uma conta e um arquivo CSV');
       return uploadCsv(accountId, file, initialBalance, endBalance);
     },
     onSuccess: () => {
@@ -62,16 +62,16 @@ export function ImportsPage() {
 
   return (
     <Box>
-      <Typography variant="h4">Imports</Typography>
+      <Typography variant="h4">Importações</Typography>
       <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
-        Upload a bank statement CSV to add transactions
+        Envie um extrato bancário em CSV para adicionar transações
       </Typography>
 
       <Paper sx={{ p: 3, maxWidth: 480 }}>
         <Stack spacing={2}>
           <TextField
             select
-            label="Account"
+            label="Conta"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
           >
@@ -83,7 +83,7 @@ export function ImportsPage() {
           </TextField>
 
           <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>
-            {file ? file.name : 'Choose CSV file'}
+            {file ? file.name : 'Escolher arquivo CSV'}
             <input
               type="file"
               accept=".csv"
@@ -93,19 +93,19 @@ export function ImportsPage() {
           </Button>
 
           <TextField
-            label="Opening balance for this period (optional)"
+            label="Saldo inicial deste período (opcional)"
             type="number"
             value={initialBalance}
             onChange={(e) => setInitialBalance(e.target.value)}
-            helperText="If set, replaces the account's initial balance with this value before importing. If left blank, the account's current balance is kept as-is."
+            helperText="Se preenchido, substitui o saldo inicial da conta por este valor antes de importar. Se deixado em branco, o saldo atual da conta é mantido."
           />
 
           <TextField
-            label="Closing balance for this period (optional)"
+            label="Saldo final deste período (opcional)"
             type="number"
             value={endBalance}
             onChange={(e) => setEndBalance(e.target.value)}
-            helperText="For reference only. Useful when this statement is older than data you've already imported: the app detects that automatically and won't let these transactions change your current balance."
+            helperText="Apenas para referência. Útil quando este extrato é mais antigo que dados já importados: o app detecta isso automaticamente e não deixa essas transações alterarem seu saldo atual."
           />
 
           <Button
@@ -113,23 +113,25 @@ export function ImportsPage() {
             disabled={!accountId || !file || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {mutation.isPending ? 'Importing...' : 'Import'}
+            {mutation.isPending ? 'Importando...' : 'Importar'}
           </Button>
 
           {mutation.isSuccess && (
             <Alert severity={mutation.data.historical ? 'info' : 'success'}>
-              Imported {mutation.data.imported}, duplicated {mutation.data.duplicated}, needs
-              review {mutation.data.needsReview}.
+              {mutation.data.imported} importada(s), {mutation.data.duplicated} duplicada(s),{' '}
+              {mutation.data.needsReview} para revisar.
               {mutation.data.historical && (
                 <>
                   {' '}
-                  This statement is older than data already on file, so these transactions were
-                  recorded but do not affect the account's current balance.
+                  Este extrato é mais antigo que dados já existentes, então essas transações foram
+                  registradas mas não afetam o saldo atual da conta.
                 </>
               )}
             </Alert>
           )}
-          {mutation.isError && <Alert severity="error">Import failed. Check the file and try again.</Alert>}
+          {mutation.isError && (
+            <Alert severity="error">Falha na importação. Verifique o arquivo e tente novamente.</Alert>
+          )}
         </Stack>
       </Paper>
     </Box>

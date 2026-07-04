@@ -25,11 +25,11 @@ import type { AccountDto, BankDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
 
 const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  [AccountType.CHECKING]: 'Checking',
-  [AccountType.SAVINGS]: 'Savings',
-  [AccountType.CREDIT_CARD]: 'Credit Card',
-  [AccountType.INVESTMENT]: 'Investment',
-  [AccountType.OTHER]: 'Other',
+  [AccountType.CHECKING]: 'Dinheiro',
+  [AccountType.SAVINGS]: 'Dinheiro',
+  [AccountType.CREDIT_CARD]: 'Crédito',
+  [AccountType.INVESTMENT]: 'Investimento',
+  [AccountType.OTHER]: 'Outro',
 };
 
 const ACCOUNT_TYPE_COLORS: Record<AccountType, { bg: string; color: string }> = {
@@ -134,7 +134,7 @@ export function AccountsPage() {
   };
 
   const handleDelete = (account: AccountDto) => {
-    if (window.confirm(`Delete account "${account.name}"? This cannot be undone.`)) {
+    if (window.confirm(`Excluir a conta "${account.name}"? Essa ação não pode ser desfeita.`)) {
       deleteMutation.mutate(account.id);
     }
   };
@@ -143,17 +143,17 @@ export function AccountsPage() {
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
-          <Typography variant="h4">Accounts</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>Balances across all your accounts</Typography>
+          <Typography variant="h4">Contas</Typography>
+          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>Saldos de todas as contas conectadas</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
-          New Account
+          Nova conta
         </Button>
       </Stack>
 
-      {isLoading && <Typography>Loading...</Typography>}
-      {isError && <Typography color="error">Could not load accounts.</Typography>}
-      {deleteMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>Could not delete account.</Alert>}
+      {isLoading && <Typography>Carregando...</Typography>}
+      {isError && <Typography color="error">Não foi possível carregar as contas.</Typography>}
+      {deleteMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>Não foi possível excluir a conta.</Alert>}
 
       {accounts && (
         <>
@@ -204,7 +204,7 @@ export function AccountsPage() {
             {accounts.length === 0 && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography sx={{ color: '#7A868E' }}>No accounts yet.</Typography>
+                  <Typography sx={{ color: '#7A868E' }}>Nenhuma conta ainda.</Typography>
                 </Paper>
               </Grid>
             )}
@@ -223,12 +223,12 @@ export function AccountsPage() {
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{form.id ? 'Edit account' : 'New account'}</DialogTitle>
+        <DialogTitle>{form.id ? 'Editar conta' : 'Nova conta'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               select
-              label="Bank"
+              label="Banco"
               value={form.bankId}
               onChange={(e) => setForm({ ...form, bankId: e.target.value })}
               required
@@ -241,7 +241,7 @@ export function AccountsPage() {
             </TextField>
 
             <TextField
-              label="Name"
+              label="Nome"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -249,7 +249,7 @@ export function AccountsPage() {
 
             <TextField
               select
-              label="Type"
+              label="Tipo"
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value as AccountType })}
             >
@@ -261,38 +261,38 @@ export function AccountsPage() {
             </TextField>
 
             <TextField
-              label="Account number"
+              label="Número da conta"
               value={form.accountNumber}
               onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
             />
 
             <TextField
-              label="Initial balance"
+              label="Saldo inicial"
               type="number"
               value={form.initialBalance}
               onChange={(e) => setForm({ ...form, initialBalance: e.target.value })}
-              helperText="Starting balance; the account's current balance is this plus its transactions."
+              helperText="Saldo de partida; o saldo atual da conta é esse valor mais as transações."
             />
 
             <TextField
-              label="Notes"
+              label="Observações"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               multiline
               minRows={2}
             />
 
-            {saveMutation.isError && <Alert severity="error">Could not save account.</Alert>}
+            {saveMutation.isError && <Alert severity="error">Não foi possível salvar a conta.</Alert>}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
           <Button
             variant="contained"
             disabled={!form.bankId || !form.name || saveMutation.isPending}
             onClick={() => saveMutation.mutate(form)}
           >
-            {saveMutation.isPending ? 'Saving...' : 'Save'}
+            {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
           </Button>
         </DialogActions>
       </Dialog>

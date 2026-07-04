@@ -33,11 +33,26 @@ enum TransactionNature {
 }
 
 enum AssetType {
-  CASH
-  RDB
-  INVESTMENT
+  CDB
+  LCI
+  LCA
+  TESOURO_SELIC
+  TESOURO_IPCA
+  TESOURO_PREFIXADO
+  POUPANCA
+  ACOES
+  FII
   REAL_ESTATE
   OTHER
+}
+
+enum ProfitRateType {
+  PREFIXADO
+  CDI_PERCENTAGE
+  IPCA_PLUS
+  SELIC_PLUS
+  POUPANCA
+  NONE
 }
 
 enum AccountType {
@@ -137,14 +152,16 @@ model Transaction {
 }
 
 model Asset {
-  id        String    @id @default(uuid())
-  name      String
-  type      AssetType
-  value     Decimal   @db.Decimal(14, 2)
-  date      DateTime  @default(now())
-  notes     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String         @id @default(uuid())
+  name           String
+  type           AssetType
+  value          Decimal        @db.Decimal(14, 2)
+  profitRateType ProfitRateType @default(NONE)
+  profitRate     Decimal?       @db.Decimal(6, 2)
+  date           DateTime       @default(now())
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@map("assets")
 }

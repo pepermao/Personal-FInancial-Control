@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import { ptBR } from '@mui/material/locale';
 
 const fontSans = '"Open Sans", -apple-system, "system-ui", "Segoe UI", Roboto, sans-serif';
 const fontSerif = '"Noticia Text", Georgia, "Times New Roman", serif';
@@ -113,4 +114,4 @@ export const theme = createTheme({
       },
     },
   },
-});
+}, ptBR);

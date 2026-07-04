@@ -24,6 +24,11 @@ interface TransactionRow extends TransactionDto {
   category?: { name: string } | null;
 }
 
+const DIRECTION_LABELS: Record<Direction, string> = {
+  [Direction.INCOME]: 'Receita',
+  [Direction.EXPENSE]: 'Despesa',
+};
+
 async function fetchTransactions() {
   const { data } = await apiClient.get<TransactionRow[]>('/transactions');
   return data;
@@ -56,9 +61,9 @@ export function TransactionsPage() {
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
-          <Typography variant="h4">Transactions</Typography>
+          <Typography variant="h4">Transações</Typography>
           <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
-            {data ? `${data.length} record${data.length === 1 ? '' : 's'}` : ' '}
+            {data ? `${data.length} registro${data.length === 1 ? '' : 's'}` : ' '}
           </Typography>
         </Box>
         <Button
@@ -67,24 +72,24 @@ export function TransactionsPage() {
           disabled={reclassifyMutation.isPending}
           onClick={() => reclassifyMutation.mutate()}
         >
-          {reclassifyMutation.isPending ? 'Reclassifying...' : 'Reclassify categories'}
+          {reclassifyMutation.isPending ? 'Reclassificando...' : 'Reclassificar categorias'}
         </Button>
       </Stack>
 
       {reclassifyMutation.isSuccess && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          Scanned {reclassifyMutation.data.scanned} transaction(s), updated{' '}
-          {reclassifyMutation.data.updated} to match current classification rules.
+          {reclassifyMutation.data.scanned} transação(ões) verificada(s), {reclassifyMutation.data.updated}{' '}
+          atualizada(s) conforme as regras de classificação atuais.
         </Alert>
       )}
       {reclassifyMutation.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Could not reclassify transactions.
+          Não foi possível reclassificar as transações.
         </Alert>
       )}
 
-      {isLoading && <Typography>Loading...</Typography>}
-      {isError && <Typography color="error">Could not load transactions.</Typography>}
+      {isLoading && <Typography>Carregando...</Typography>}
+      {isError && <Typography color="error">Não foi possível carregar as transações.</Typography>}
 
       {data && (
         <Paper>
@@ -92,18 +97,18 @@ export function TransactionsPage() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Account</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                  <TableCell>Direction</TableCell>
+                  <TableCell>Data</TableCell>
+                  <TableCell>Descrição</TableCell>
+                  <TableCell>Conta</TableCell>
+                  <TableCell>Categoria</TableCell>
+                  <TableCell align="right">Valor</TableCell>
+                  <TableCell>Direção</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.map((tx) => (
                   <TableRow key={tx.id} hover>
-                    <TableCell>{new Date(tx.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</TableCell>
+                    <TableCell>{new Date(tx.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                     <TableCell>{tx.descriptionRaw}</TableCell>
                     <TableCell>{tx.account?.name ?? '-'}</TableCell>
                     <TableCell>{tx.category?.name ?? '-'}</TableCell>
@@ -111,7 +116,7 @@ export function TransactionsPage() {
                     <TableCell>
                       <Chip
                         size="small"
-                        label={tx.direction}
+                        label={DIRECTION_LABELS[tx.direction]}
                         color={tx.direction === Direction.INCOME ? 'success' : 'default'}
                       />
                     </TableCell>
@@ -120,7 +125,7 @@ export function TransactionsPage() {
                 {data.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} align="center">
-                      No transactions yet.
+                      Nenhuma transação ainda.
                     </TableCell>
                   </TableRow>
                 )}

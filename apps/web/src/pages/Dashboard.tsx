@@ -39,26 +39,28 @@ export function DashboardPage() {
 
   return (
     <Box>
-      <Typography variant="h4">Dashboard</Typography>
-      <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>Summary for {month}</Typography>
+      <Typography variant="h4">Painel</Typography>
+      <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
+        Sua posição financeira num relance
+      </Typography>
 
-      {isLoading && <Typography>Loading...</Typography>}
-      {isError && <Typography color="error">Could not load dashboard summary.</Typography>}
+      {isLoading && <Typography>Carregando...</Typography>}
+      {isError && <Typography color="error">Não foi possível carregar o resumo.</Typography>}
 
       {data && (
         <>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
-              <KpiCard label="Income" value={`R$ ${data.totalIncome}`} />
+              <KpiCard label="Renda mensal" value={`R$ ${data.totalIncome}`} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <KpiCard label="Expenses" value={`R$ ${data.totalExpense}`} />
+              <KpiCard label="Custo de vida" value={`R$ ${data.totalExpense}`} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <KpiCard label="Balance" value={`R$ ${data.balance}`} />
+              <KpiCard label="Fluxo de caixa" value={`R$ ${data.balance}`} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <KpiCard label="Net worth" value={`R$ ${data.netWorth}`} />
+              <KpiCard label="Patrimônio líquido" value={`R$ ${data.netWorth}`} />
             </Grid>
           </Grid>
 
@@ -66,7 +68,7 @@ export function DashboardPage() {
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2.5, height: '100%' }}>
                 <Typography variant="h6" sx={{ fontSize: 16, mb: 2 }}>
-                  Accounts
+                  Contas
                 </Typography>
                 <Stack divider={<Box sx={{ borderBottom: '1px solid #F1F3F5' }} />} spacing={1.25}>
                   {data.byAccount.map((account) => (
@@ -85,7 +87,7 @@ export function DashboardPage() {
                     </Stack>
                   ))}
                   {data.byAccount.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>No accounts yet.</Typography>
+                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma conta ainda.</Typography>
                   )}
                 </Stack>
               </Paper>
@@ -94,7 +96,7 @@ export function DashboardPage() {
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2.5, height: '100%' }}>
                 <Typography variant="h6" sx={{ fontSize: 16, mb: 2 }}>
-                  Spending by category
+                  Gastos por categoria
                 </Typography>
                 <Stack spacing={1.5}>
                   {data.byCategory.map((category) => (
@@ -116,7 +118,7 @@ export function DashboardPage() {
                     </Box>
                   ))}
                   {data.byCategory.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>No expenses this month.</Typography>
+                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma despesa este mês.</Typography>
                   )}
                 </Stack>
               </Paper>

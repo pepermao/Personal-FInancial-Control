@@ -24,11 +24,26 @@ export enum TransactionNature {
 }
 
 export enum AssetType {
-  CASH = 'CASH',
-  RDB = 'RDB',
-  INVESTMENT = 'INVESTMENT',
+  CDB = 'CDB',
+  LCI = 'LCI',
+  LCA = 'LCA',
+  TESOURO_SELIC = 'TESOURO_SELIC',
+  TESOURO_IPCA = 'TESOURO_IPCA',
+  TESOURO_PREFIXADO = 'TESOURO_PREFIXADO',
+  POUPANCA = 'POUPANCA',
+  ACOES = 'ACOES',
+  FII = 'FII',
   REAL_ESTATE = 'REAL_ESTATE',
   OTHER = 'OTHER',
+}
+
+export enum ProfitRateType {
+  PREFIXADO = 'PREFIXADO',
+  CDI_PERCENTAGE = 'CDI_PERCENTAGE',
+  IPCA_PLUS = 'IPCA_PLUS',
+  SELIC_PLUS = 'SELIC_PLUS',
+  POUPANCA = 'POUPANCA',
+  NONE = 'NONE',
 }
 
 export enum AccountType {
@@ -108,6 +123,8 @@ export interface AssetDto {
   name: string;
   type: AssetType;
   value: string;
+  profitRateType: ProfitRateType;
+  profitRate: string | null;
   date: string;
   notes: string | null;
   createdAt: string;

@@ -5,13 +5,13 @@ import Paper from '@mui/material/Paper';
 export function SettingsPage() {
   return (
     <Box>
-      <Typography variant="h4">Settings</Typography>
+      <Typography variant="h4">Configurações</Typography>
       <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
-        Preferences and workspace configuration
+        Preferências e configuração do espaço
       </Typography>
 
       <Paper sx={{ p: 3, maxWidth: 480 }}>
-        <Typography sx={{ color: '#7A868E' }}>Coming soon.</Typography>
+        <Typography sx={{ color: '#7A868E' }}>Em breve.</Typography>
       </Paper>
     </Box>
   );

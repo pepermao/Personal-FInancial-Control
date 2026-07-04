@@ -40,13 +40,13 @@ export function RulesPage() {
 
   return (
     <Box>
-      <Typography variant="h4">Classification rules</Typography>
+      <Typography variant="h4">Regras de classificação</Typography>
       <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
-        Automate how transactions are organized
+        Automatize como as transações são organizadas
       </Typography>
 
-      {isLoading && <Typography>Loading...</Typography>}
-      {isError && <Typography color="error">Could not load rules.</Typography>}
+      {isLoading && <Typography>Carregando...</Typography>}
+      {isError && <Typography color="error">Não foi possível carregar as regras.</Typography>}
 
       {data && (
         <>
@@ -55,13 +55,13 @@ export function RulesPage() {
               <Paper key={rule.id} sx={{ p: 2, opacity: rule.active ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
                   <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
-                    <Typography sx={labelSx}>If</Typography>
-                    <Chip label="Description" size="small" sx={pillSx} />
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>contains</Typography>
+                    <Typography sx={labelSx}>Se</Typography>
+                    <Chip label="Descrição" size="small" sx={pillSx} />
+                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>contém</Typography>
                     <Chip label={rule.pattern} size="small" sx={valuePillSx} />
                     <Typography sx={{ fontSize: 13, color: '#7A868E' }}>→</Typography>
-                    <Typography sx={labelSx}>Then</Typography>
-                    <Chip label="Category" size="small" sx={pillSx} />
+                    <Typography sx={labelSx}>Então</Typography>
+                    <Chip label="Categoria" size="small" sx={pillSx} />
                     <Typography sx={{ fontSize: 13, color: '#7A868E' }}>=</Typography>
                     <Chip
                       label={rule.subcategory ? `${rule.category?.name ?? '-'} / ${rule.subcategory}` : rule.category?.name ?? '-'}
@@ -78,7 +78,7 @@ export function RulesPage() {
             ))}
             {data.length === 0 && (
               <Paper sx={{ p: 3, textAlign: 'center' }}>
-                <Typography sx={{ color: '#7A868E' }}>No rules yet.</Typography>
+                <Typography sx={{ color: '#7A868E' }}>Nenhuma regra ainda.</Typography>
               </Paper>
             )}
           </Stack>

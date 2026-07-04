@@ -21,14 +21,14 @@ import WalletOutlined from '@mui/icons-material/WalletOutlined';
 const DRAWER_WIDTH = 236;
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', to: '/dashboard', icon: <DashboardOutlined /> },
-  { label: 'Transactions', to: '/transactions', icon: <ReceiptLongOutlined /> },
-  { label: 'Accounts', to: '/accounts', icon: <AccountBalanceOutlined /> },
-  { label: 'Assets', to: '/assets', icon: <SavingsOutlined /> },
-  { label: 'Categories', to: '/categories', icon: <CategoryOutlined /> },
-  { label: 'Rules', to: '/rules', icon: <RuleOutlined /> },
-  { label: 'Imports', to: '/imports', icon: <UploadFileOutlined /> },
-  { label: 'Settings', to: '/settings', icon: <SettingsOutlined /> },
+  { label: 'Painel', to: '/dashboard', icon: <DashboardOutlined /> },
+  { label: 'Transações', to: '/transactions', icon: <ReceiptLongOutlined /> },
+  { label: 'Contas', to: '/accounts', icon: <AccountBalanceOutlined /> },
+  { label: 'Ativos', to: '/assets', icon: <SavingsOutlined /> },
+  { label: 'Categorias', to: '/categories', icon: <CategoryOutlined /> },
+  { label: 'Regras', to: '/rules', icon: <RuleOutlined /> },
+  { label: 'Importações', to: '/imports', icon: <UploadFileOutlined /> },
+  { label: 'Configurações', to: '/settings', icon: <SettingsOutlined /> },
 ];
 
 export function Layout() {
@@ -109,7 +109,7 @@ export function Layout() {
           </Avatar>
           <Box>
             <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>Ledger</Typography>
-            <Typography sx={{ fontSize: 11.5, color: '#7A868E', lineHeight: 1.3 }}>Personal</Typography>
+            <Typography sx={{ fontSize: 11.5, color: '#7A868E', lineHeight: 1.3 }}>Pessoal</Typography>
           </Box>
         </Stack>
       </Drawer>

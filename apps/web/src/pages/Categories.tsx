@@ -29,13 +29,13 @@ export function CategoriesPage() {
 
   return (
     <Box>
-      <Typography variant="h4">Categories</Typography>
+      <Typography variant="h4">Categorias</Typography>
       <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
-        Spending by category this month
+        Padrões de gastos por categoria
       </Typography>
 
-      {isLoading && <Typography>Loading...</Typography>}
-      {isError && <Typography color="error">Could not load categories.</Typography>}
+      {isLoading && <Typography>Carregando...</Typography>}
+      {isError && <Typography color="error">Não foi possível carregar as categorias.</Typography>}
 
       {data && (
         <Grid container spacing={2}>
@@ -49,7 +49,7 @@ export function CategoriesPage() {
                     {stats ? `R$ ${stats.total}` : 'R$ 0.00'}
                   </Typography>
                   {!stats && (
-                    <Typography sx={{ fontSize: 12, color: '#7A868E', mt: 0.5 }}>No spending this month</Typography>
+                    <Typography sx={{ fontSize: 12, color: '#7A868E', mt: 0.5 }}>Nenhum gasto este mês</Typography>
                   )}
                 </Paper>
               </Grid>
@@ -58,7 +58,7 @@ export function CategoriesPage() {
           {topLevel.length === 0 && (
             <Grid item xs={12}>
               <Paper sx={{ p: 3, textAlign: 'center' }}>
-                <Typography sx={{ color: '#7A868E' }}>No categories yet.</Typography>
+                <Typography sx={{ color: '#7A868E' }}>Nenhuma categoria ainda.</Typography>
               </Paper>
             </Grid>
           )}
