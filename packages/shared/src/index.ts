@@ -193,3 +193,13 @@ export interface CashFlowDto {
   granularity: 'month' | 'day';
   series: CashFlowPointDto[];
 }
+
+export interface NetWorthPointDto {
+  /** "YYYY-MM" */
+  label: string;
+  netWorth: string;
+}
+
+export interface NetWorthHistoryDto {
+  series: NetWorthPointDto[];
+}

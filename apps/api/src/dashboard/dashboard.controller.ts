@@ -15,4 +15,9 @@ export class DashboardController {
   cashFlow(@Query() query: DashboardSummaryQueryDto) {
     return this.dashboardService.cashFlow(query.month, query.year);
   }
+
+  @Get('net-worth-history')
+  netWorthHistory() {
+    return this.dashboardService.netWorthHistory();
+  }
 }

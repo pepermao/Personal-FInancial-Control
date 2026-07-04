@@ -164,4 +164,48 @@ export class DashboardService {
       })),
     };
   }
+
+  /** Net worth at the end of each of the trailing 12 months, ending at the current real-world month. */
+  async netWorthHistory() {
+    const [accounts, transactions, assets] = await Promise.all([
+      this.prisma.account.findMany({ select: { initialBalance: true } }),
+      this.prisma.transaction.findMany({
+        where: { impactsAccountBalance: true },
+        select: { date: true, amount: true, direction: true },
+        orderBy: { date: 'asc' },
+      }),
+      this.prisma.asset.findMany({ select: { date: true, value: true } }),
+    ]);
+
+    const initialBalanceSum = accounts.reduce((sum, a) => sum + Number(a.initialBalance), 0);
+
+    const now = new Date();
+    const months: string[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      months.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
+    }
+
+    const series = months.map((month) => {
+      const [y, m] = month.split('-').map(Number);
+      const endOfMonth = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
+
+      const txSum = transactions
+        .filter((tx) => tx.date <= endOfMonth)
+        .reduce(
+          (sum, tx) => sum + (tx.direction === Direction.INCOME ? Number(tx.amount) : -Number(tx.amount)),
+          0,
+        );
+      const assetsSum = assets
+        .filter((asset) => asset.date <= endOfMonth)
+        .reduce((sum, asset) => sum + Number(asset.value), 0);
+
+      return {
+        label: month,
+        netWorth: (initialBalanceSum + txSum + assetsSum).toFixed(2),
+      };
+    });
+
+    return { series };
+  }
 }

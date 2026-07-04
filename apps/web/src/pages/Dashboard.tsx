@@ -7,8 +7,11 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import LinearProgress from '@mui/material/LinearProgress';
 import { BarChart } from '@mui/x-charts/BarChart';
+import { LineChart } from '@mui/x-charts/LineChart';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { apiClient } from '../api/client';
-import type { CashFlowDto, DashboardSummaryDto } from '@ledger/shared';
+import type { CashFlowDto, DashboardSummaryDto, NetWorthHistoryDto } from '@ledger/shared';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -20,6 +23,11 @@ async function fetchSummary(params: { year?: string; month?: string }) {
 
 async function fetchCashFlow(params: { year?: string; month?: string }) {
   const { data } = await apiClient.get<CashFlowDto>('/dashboard/cash-flow', { params });
+  return data;
+}
+
+async function fetchNetWorthHistory() {
+  const { data } = await apiClient.get<NetWorthHistoryDto>('/dashboard/net-worth-history');
   return data;
 }
 
@@ -52,6 +60,11 @@ export function DashboardPage() {
     enabled: Boolean(data),
   });
 
+  const { data: netWorthHistory } = useQuery({
+    queryKey: ['dashboard-net-worth-history'],
+    queryFn: fetchNetWorthHistory,
+  });
+
   const maxCategoryTotal = data ? Math.max(1, ...data.byCategory.map((c) => Number(c.total))) : 1;
   const cashFlowLabels = cashFlow
     ? cashFlow.series.map((point) =>
@@ -60,6 +73,13 @@ export function DashboardPage() {
     : [];
   const minDate = data?.earliestMonth ? monthStringToDate(data.earliestMonth) : undefined;
   const maxDate = new Date();
+
+  const netWorthLabels = netWorthHistory
+    ? netWorthHistory.series.map((point) => MONTH_LABELS[Number(point.label.slice(5, 7)) - 1])
+    : [];
+  const netWorthValues = netWorthHistory ? netWorthHistory.series.map((point) => Number(point.netWorth)) : [];
+  const netWorthChange =
+    netWorthValues.length > 1 ? netWorthValues[netWorthValues.length - 1] - netWorthValues[0] : 0;
 
   const handlePeriodTypeChange = (value: PeriodType) => {
     if (value === periodType) return;
@@ -120,6 +140,43 @@ export function DashboardPage() {
               <KpiCard label="Imóveis" value={`R$ ${data.totalRealEstate}`} />
             </Grid>
           </Grid>
+
+          {netWorthHistory && netWorthValues.length > 0 && (
+            <Paper sx={{ p: 2.5, mt: 2 }}>
+              <Typography variant="h6" sx={{ fontSize: 16 }}>
+                Patrimônio líquido
+              </Typography>
+              <Typography sx={{ fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em', mt: 0.5 }}>
+                R$ {netWorthValues[netWorthValues.length - 1].toFixed(2)}
+              </Typography>
+              <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
+                {netWorthChange >= 0 ? (
+                  <ArrowUpwardIcon sx={{ fontSize: 14, color: '#0E9D63' }} />
+                ) : (
+                  <ArrowDownwardIcon sx={{ fontSize: 14, color: '#C7443F' }} />
+                )}
+                <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: netWorthChange >= 0 ? '#0E9D63' : '#C7443F' }}>
+                  R$ {Math.abs(netWorthChange).toFixed(2)}
+                </Typography>
+                <Typography sx={{ fontSize: 12.5, color: '#7A868E' }}>nos últimos 12 meses</Typography>
+              </Stack>
+              <LineChart
+                height={280}
+                series={[
+                  {
+                    data: netWorthValues,
+                    area: true,
+                    color: '#0E9D63',
+                    showMark: false,
+                  },
+                ]}
+                xAxis={[{ data: netWorthLabels, scaleType: 'point' }]}
+                grid={{ horizontal: true }}
+                sx={{ '& .MuiAreaElement-root': { fillOpacity: 0.15 } }}
+                slotProps={{ legend: { hidden: true } }}
+              />
+            </Paper>
+          )}
 
           {cashFlow && (
             <Paper sx={{ p: 2.5, mt: 2 }}>
