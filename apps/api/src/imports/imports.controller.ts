@@ -39,6 +39,11 @@ export class ImportsController {
     @Body() dto: BulkImportCsvDto,
   ) {
     if (!files || files.length === 0) throw new BadRequestException('At least one CSV file is required');
+    if (files.length > 1 && (dto.initialBalance !== undefined || dto.endBalance !== undefined)) {
+      throw new BadRequestException(
+        'initialBalance/endBalance are only supported when uploading a single file',
+      );
+    }
     // Sort by filename so users get deterministic ordering; historical detection uses
     // per-file tx dates, so oldest statements always land as historical against newer ones.
     const sorted = [...files].sort((a, b) => a.originalname.localeCompare(b.originalname));
@@ -49,6 +54,8 @@ export class ImportsController {
           dto.accountId,
           file.originalname,
           file.buffer,
+          files.length === 1 ? dto.initialBalance : undefined,
+          files.length === 1 ? dto.endBalance : undefined,
         );
         results.push({ filename: file.originalname, ok: true, ...result });
       } catch (err) {

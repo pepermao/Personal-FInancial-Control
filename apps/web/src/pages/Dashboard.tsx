@@ -10,27 +10,11 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { apiClient } from '../api/client';
-import type { CashFlowDto, DashboardSummaryDto, NetWorthHistoryDto } from '@ledger/shared';
+import { dashboardApi, periodKey, qk } from '../api';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 import { formatBRL } from '../utils/format';
 
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-async function fetchSummary(params: { year?: string; month?: string }) {
-  const { data } = await apiClient.get<DashboardSummaryDto>('/dashboard/summary', { params });
-  return data;
-}
-
-async function fetchCashFlow(params: { year?: string; month?: string }) {
-  const { data } = await apiClient.get<CashFlowDto>('/dashboard/cash-flow', { params });
-  return data;
-}
-
-async function fetchNetWorthHistory() {
-  const { data } = await apiClient.get<NetWorthHistoryDto>('/dashboard/net-worth-history');
-  return data;
-}
 
 function KpiCard({ label, value }: { label: string; value: string }) {
   return (
@@ -50,20 +34,23 @@ export function DashboardPage() {
   const [year, setYear] = useState<string | undefined>(undefined);
   const [month, setMonth] = useState<string | undefined>(undefined);
 
+  const params = periodType === 'month' ? { month } : { year };
+  const cacheKey = periodKey(params.month, params.year);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['dashboard-summary', periodType, periodType === 'month' ? (month ?? 'default') : (year ?? 'default')],
-    queryFn: () => fetchSummary(periodType === 'month' ? { month } : { year }),
+    queryKey: qk.dashboard.summary(cacheKey),
+    queryFn: () => dashboardApi.summary(params),
   });
 
   const { data: cashFlow } = useQuery({
-    queryKey: ['dashboard-cash-flow', periodType, periodType === 'month' ? (month ?? 'default') : (year ?? 'default')],
-    queryFn: () => fetchCashFlow(periodType === 'month' ? { month } : { year }),
+    queryKey: qk.dashboard.cashFlow(cacheKey),
+    queryFn: () => dashboardApi.cashFlow(params),
     enabled: Boolean(data),
   });
 
   const { data: netWorthHistory } = useQuery({
-    queryKey: ['dashboard-net-worth-history'],
-    queryFn: fetchNetWorthHistory,
+    queryKey: qk.dashboard.netWorthHistory(),
+    queryFn: dashboardApi.netWorthHistory,
   });
 
   const maxCategoryTotal = data ? Math.max(1, ...data.byCategory.map((c) => Number(c.total))) : 1;

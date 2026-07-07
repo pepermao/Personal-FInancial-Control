@@ -28,17 +28,21 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ClearIcon from '@mui/icons-material/Clear';
-import { apiClient } from '../api/client';
-import type { AccountDto, CategoryDto, ReclassifyResultDto, TransactionDto } from '@ledger/shared';
+import type { CategoryDto } from '@ledger/shared';
 import { CategoryKind, Direction } from '@ledger/shared';
+import {
+  accountsApi,
+  categoriesApi,
+  qk,
+  readApiError,
+  transactionsApi,
+  type TransactionWithRelations,
+} from '../api';
 import { formatBRL } from '../utils/format';
 import { usePagination } from '../hooks/usePagination';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 
-interface TransactionRow extends TransactionDto {
-  account?: { name: string; bank?: { name: string } };
-  category?: { name: string; kind: CategoryKind } | null;
-}
+type TransactionRow = TransactionWithRelations;
 
 const DIRECTION_LABELS: Record<Direction, string> = {
   [Direction.INCOME]: 'Receita',
@@ -52,19 +56,6 @@ const KIND_LABEL: Record<CategoryKind, string> = {
   [CategoryKind.INVESTMENT]: 'Investimento',
   [CategoryKind.REIMBURSEMENT]: 'Reembolso',
 };
-
-async function fetchTransactions() {
-  const { data } = await apiClient.get<TransactionRow[]>('/transactions');
-  return data;
-}
-async function fetchCategories() {
-  const { data } = await apiClient.get<CategoryDto[]>('/categories');
-  return data;
-}
-async function fetchAccounts() {
-  const { data } = await apiClient.get<AccountDto[]>('/accounts');
-  return data;
-}
 
 interface TransactionFormValues {
   accountId: string;
@@ -88,10 +79,10 @@ function emptyForm(defaultAccount?: string): TransactionFormValues {
   };
 }
 
-async function createTx(values: TransactionFormValues) {
+function toTxPayload(values: TransactionFormValues) {
   const date = new Date(values.date);
   const competenceMonth = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-  const { data } = await apiClient.post<TransactionDto>('/transactions', {
+  return {
     accountId: values.accountId,
     date: date.toISOString(),
     competenceMonth,
@@ -100,38 +91,7 @@ async function createTx(values: TransactionFormValues) {
     direction: values.direction,
     categoryId: values.categoryId ?? undefined,
     notes: values.notes || undefined,
-  });
-  return data;
-}
-
-async function updateTx({ id, values }: { id: string; values: TransactionFormValues }) {
-  const date = new Date(values.date);
-  const competenceMonth = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-  const { data } = await apiClient.patch<TransactionDto>(`/transactions/${id}`, {
-    accountId: values.accountId,
-    date: date.toISOString(),
-    competenceMonth,
-    descriptionRaw: values.descriptionRaw,
-    amount: values.amount,
-    direction: values.direction,
-    categoryId: values.categoryId,
-    notes: values.notes || undefined,
-  });
-  return data;
-}
-
-async function deleteTx(id: string) {
-  await apiClient.delete(`/transactions/${id}`);
-}
-
-async function patchCategory(id: string, categoryId: string | null) {
-  const { data } = await apiClient.patch<TransactionDto>(`/transactions/${id}`, { categoryId });
-  return data;
-}
-
-async function reclassifyTransactions() {
-  const { data } = await apiClient.post<ReclassifyResultDto>('/transactions/reclassify');
-  return data;
+  };
 }
 
 interface CategoryOption {
@@ -153,11 +113,11 @@ function buildCategoryOptions(categories: CategoryDto[]): CategoryOption[] {
 export function TransactionsPage() {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: fetchTransactions,
+    queryKey: qk.transactions.all(),
+    queryFn: transactionsApi.list,
   });
-  const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
-  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: fetchAccounts });
+  const { data: categories } = useQuery({ queryKey: qk.categories.all(), queryFn: categoriesApi.list });
+  const { data: accounts } = useQuery({ queryKey: qk.accounts.all(), queryFn: accountsApi.list });
   const categoryOptions = useMemo(() => (categories ? buildCategoryOptions(categories) : []), [categories]);
   const { page, rowsPerPage, paginate, handleChangePage, handleChangeRowsPerPage } = usePagination(50);
 
@@ -180,21 +140,22 @@ export function TransactionsPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: qk.transactions.all() });
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-cash-flow'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard-net-worth-history'] });
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.netWorthHistory() });
   };
 
   const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, categoryId }: { id: string; categoryId: string | null }) => patchCategory(id, categoryId),
+    mutationFn: ({ id, categoryId }: { id: string; categoryId: string | null }) =>
+      transactionsApi.update(id, { categoryId }),
     onSuccess: () => invalidate(),
     onSettled: () => setEditingCategoryId(null),
   });
 
   const bulkCategoryMutation = useMutation({
     mutationFn: async ({ ids, categoryId }: { ids: string[]; categoryId: string | null }) => {
-      await Promise.all(ids.map((id) => patchCategory(id, categoryId)));
+      await Promise.all(ids.map((id) => transactionsApi.update(id, { categoryId })));
     },
     onSuccess: () => {
       invalidate();
@@ -203,30 +164,31 @@ export function TransactionsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createTx,
+    mutationFn: (values: TransactionFormValues) => transactionsApi.create(toTxPayload(values)),
     onSuccess: () => {
       invalidate();
       closeDialog();
     },
-    onError: (err: any) => setFormError(err?.response?.data?.message ?? 'Erro ao criar transação'),
+    onError: (err: unknown) => setFormError(readApiError(err, 'Erro ao criar transação')),
   });
 
   const editMutation = useMutation({
-    mutationFn: updateTx,
+    mutationFn: ({ id, values }: { id: string; values: TransactionFormValues }) =>
+      transactionsApi.update(id, toTxPayload(values)),
     onSuccess: () => {
       invalidate();
       closeDialog();
     },
-    onError: (err: any) => setFormError(err?.response?.data?.message ?? 'Erro ao atualizar transação'),
+    onError: (err: unknown) => setFormError(readApiError(err, 'Erro ao atualizar transação')),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteTx,
+    mutationFn: (id: string) => transactionsApi.remove(id),
     onSuccess: () => invalidate(),
   });
 
   const reclassifyMutation = useMutation({
-    mutationFn: reclassifyTransactions,
+    mutationFn: () => transactionsApi.reclassifyAll(),
     onSuccess: () => invalidate(),
   });
 

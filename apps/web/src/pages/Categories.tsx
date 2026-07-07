@@ -24,10 +24,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import Alert from '@mui/material/Alert';
-import { apiClient } from '../api/client';
 import { CategoryKind, Direction } from '@ledger/shared';
+import type { CategoryDto } from '@ledger/shared';
+import { categoriesApi, qk, readApiError, transactionsApi } from '../api';
 import { formatBRL } from '../utils/format';
-import type { CategoryDto, TransactionDto } from '@ledger/shared';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 
 const KIND_LABEL: Record<CategoryKind, string> = {
@@ -54,51 +54,22 @@ const KIND_COLOR: Record<CategoryKind, 'success' | 'default' | 'info' | 'warning
   [CategoryKind.REIMBURSEMENT]: 'warning',
 };
 
-async function fetchCategories() {
-  const { data } = await apiClient.get<CategoryDto[]>('/categories');
-  return data;
-}
-
-async function fetchTransactions() {
-  const { data } = await apiClient.get<TransactionDto[]>('/transactions');
-  return data;
-}
-
 interface CategoryFormValues {
   name: string;
   kind: CategoryKind;
   parentId: string | null;
 }
 
-async function createCategory(values: CategoryFormValues) {
-  const { data } = await apiClient.post<CategoryDto>('/categories', {
-    name: values.name,
-    kind: values.kind,
-    parentId: values.parentId ?? undefined,
-  });
-  return data;
-}
-
-async function updateCategory({ id, values }: { id: string; values: CategoryFormValues }) {
-  const { data } = await apiClient.patch<CategoryDto>(`/categories/${id}`, {
-    name: values.name,
-    kind: values.kind,
-    parentId: values.parentId ?? null,
-  });
-  return data;
-}
-
-async function deleteCategory(id: string) {
-  await apiClient.delete(`/categories/${id}`);
-}
-
 export function CategoriesPage() {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['categories'],
-    queryFn: fetchCategories,
+    queryKey: qk.categories.all(),
+    queryFn: categoriesApi.list,
   });
-  const { data: transactions } = useQuery({ queryKey: ['transactions'], queryFn: fetchTransactions });
+  const { data: transactions } = useQuery({
+    queryKey: qk.transactions.all(),
+    queryFn: transactionsApi.list,
+  });
 
   const [periodType, setPeriodType] = useState<PeriodType>('all');
   const [year, setYear] = useState<string | undefined>(undefined);
@@ -114,33 +85,35 @@ export function CategoriesPage() {
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['categories'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: qk.categories.all() });
+    queryClient.invalidateQueries({ queryKey: qk.transactions.all() });
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
   };
 
   const createMutation = useMutation({
-    mutationFn: createCategory,
+    mutationFn: (values: CategoryFormValues) =>
+      categoriesApi.create({ name: values.name, kind: values.kind, parentId: values.parentId }),
     onSuccess: () => {
       invalidate();
       closeDialog();
     },
-    onError: (err: any) => setMutationError(err?.response?.data?.message ?? 'Erro ao criar'),
+    onError: (err: unknown) => setMutationError(readApiError(err, 'Erro ao criar')),
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateCategory,
+    mutationFn: ({ id, values }: { id: string; values: CategoryFormValues }) =>
+      categoriesApi.update(id, { name: values.name, kind: values.kind, parentId: values.parentId }),
     onSuccess: () => {
       invalidate();
       closeDialog();
     },
-    onError: (err: any) => setMutationError(err?.response?.data?.message ?? 'Erro ao atualizar'),
+    onError: (err: unknown) => setMutationError(readApiError(err, 'Erro ao atualizar')),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteCategory,
+    mutationFn: (id: string) => categoriesApi.remove(id),
     onSuccess: invalidate,
-    onError: (err: any) => setMutationError(err?.response?.data?.message ?? 'Erro ao excluir'),
+    onError: (err: unknown) => setMutationError(readApiError(err, 'Erro ao excluir')),
   });
 
   const openCreate = () => {

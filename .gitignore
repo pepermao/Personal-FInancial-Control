@@ -8,3 +8,14 @@ build/
 apps/api/generated/
 apps/web/dist/
 .turbo/
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+
+# Vitest coverage output
+coverage/
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
