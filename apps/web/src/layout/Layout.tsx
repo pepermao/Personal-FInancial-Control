@@ -21,7 +21,6 @@ import CategoryOutlined from '@mui/icons-material/CategoryOutlined';
 import RuleOutlined from '@mui/icons-material/RuleOutlined';
 import UploadFileOutlined from '@mui/icons-material/UploadFileOutlined';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import WalletOutlined from '@mui/icons-material/WalletOutlined';
 import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
 import { useThemeMode } from '../theme-mode';
@@ -72,22 +71,21 @@ export function Layout() {
       >
         <Stack direction="row" alignItems="center" spacing={1.375} sx={{ px: 1, pb: 2.5 }}>
           <Box
+            component="img"
+            src="/kevin.jpg"
+            alt="Kevin"
             sx={{
               flex: '0 0 32px',
               width: 32,
               height: 32,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               borderRadius: '9px',
-              backgroundColor: logoBg,
-              color: logoFg,
+              objectFit: 'cover',
+              objectPosition: 'center 25%',
+              border: `1px solid ${theme.palette.divider}`,
             }}
-          >
-            <WalletOutlined sx={{ fontSize: 18 }} />
-          </Box>
+          />
           <Typography variant="h6" noWrap sx={{ fontSize: 19 }}>
-            Ledger
+            Kevin
           </Typography>
         </Stack>
 
@@ -126,13 +124,13 @@ export function Layout() {
           spacing={1.25}
           sx={{ px: 1, py: 1, borderTop: `1px solid ${theme.palette.divider}`, mt: 1, pt: 2 }}
         >
-          <Avatar sx={{ width: 32, height: 32, bgcolor: logoBg, color: logoFg, fontSize: 13, fontWeight: 700 }}>
-            LG
+          <Avatar src="/kevin.jpg" alt="Kevin Malone" sx={{ width: 32, height: 32 }}>
+            KM
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>Ledger</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>Kevin Malone</Typography>
             <Typography sx={{ fontSize: 11.5, color: theme.palette.text.secondary, lineHeight: 1.3 }}>
-              Pessoal
+              Contador
             </Typography>
           </Box>
           <Tooltip title={isDark ? 'Modo claro' : 'Modo escuro'}>

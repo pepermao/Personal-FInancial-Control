@@ -1,4 +1,6 @@
-# Ledger
+# Kevin
+
+> *"Why waste time say lot word when few word do trick?"* — Kevin Malone
 
 A personal finance application: track accounts, transactions, categories, auto-classification rules,
 wealth assets, and CSV bank statement imports.

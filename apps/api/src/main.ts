@@ -21,7 +21,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3001;
   await app.listen(port);
-  console.log(`Ledger API listening on http://localhost:${port}`);
+  console.log(`Kevin API listening on http://localhost:${port}`);
 }
 
 bootstrap();
