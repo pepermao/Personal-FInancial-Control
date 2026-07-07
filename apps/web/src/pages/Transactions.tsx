@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
@@ -40,7 +40,10 @@ import {
 } from '../api';
 import { formatBRL } from '../utils/format';
 import { usePagination } from '../hooks/usePagination';
-import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
+import { useInvalidate } from '../hooks/useInvalidate';
+import { useConfirm } from '../hooks/useConfirm';
+import { usePeriodState } from '../hooks/usePeriodState';
+import { PeriodPicker } from '../components/PeriodPicker';
 
 type TransactionRow = TransactionWithRelations;
 
@@ -111,7 +114,8 @@ function buildCategoryOptions(categories: CategoryDto[]): CategoryOption[] {
 }
 
 export function TransactionsPage() {
-  const queryClient = useQueryClient();
+  const invalidateAll = useInvalidate();
+  const confirm = useConfirm();
   const { data, isLoading, isError } = useQuery({
     queryKey: qk.transactions.all(),
     queryFn: transactionsApi.list,
@@ -130,9 +134,7 @@ export function TransactionsPage() {
   const [filterDirection, setFilterDirection] = useState<string>('');
   const [search, setSearch] = useState<string>('');
 
-  const [periodType, setPeriodType] = useState<PeriodType>('year');
-  const [year, setYear] = useState<string | undefined>(undefined);
-  const [month, setMonth] = useState<string | undefined>(undefined);
+  const period = usePeriodState({ months: (data ?? []).map((tx) => tx.competenceMonth) });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<TransactionRow | null>(null);
@@ -140,10 +142,8 @@ export function TransactionsPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: qk.transactions.all() });
-    queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard-cash-flow'] });
-    queryClient.invalidateQueries({ queryKey: qk.dashboard.netWorthHistory() });
+    invalidateAll.transactions();
+    invalidateAll.dashboard();
   };
 
   const updateCategoryMutation = useMutation({
@@ -192,26 +192,9 @@ export function TransactionsPage() {
     onSuccess: () => invalidate(),
   });
 
-  const months = (data ?? []).map((tx) => tx.competenceMonth);
-  const earliestMonth = months.length ? months.reduce((a, b) => (a < b ? a : b)) : undefined;
-  const latestMonth = months.length ? months.reduce((a, b) => (a > b ? a : b)) : undefined;
-  const defaultYear = latestMonth?.slice(0, 4) ?? String(new Date().getFullYear());
-  const effectiveYear = year ?? defaultYear;
-  const effectiveMonth = month ?? latestMonth ?? `${effectiveYear}-01`;
-  const minDate = earliestMonth ? monthStringToDate(earliestMonth) : undefined;
-  const maxDate = new Date();
-
-  const handlePeriodTypeChange = (value: PeriodType) => {
-    if (value === periodType) return;
-    if (value === 'month' && !month) setMonth(latestMonth ?? `${effectiveYear}-01`);
-    if (value === 'year' && !year) setYear(defaultYear);
-    setPeriodType(value);
-  };
-
   const searchNormalized = search.trim().toUpperCase();
   const filtered = (data ?? []).filter((tx) => {
-    if (periodType === 'year' && !tx.competenceMonth.startsWith(effectiveYear)) return false;
-    if (periodType === 'month' && tx.competenceMonth !== effectiveMonth) return false;
+    if (!period.includes(tx.competenceMonth)) return false;
     if (filterAccount && tx.accountId !== filterAccount) return false;
     if (filterCategory) {
       if (filterCategory === '__none__') {
@@ -304,14 +287,14 @@ export function TransactionsPage() {
         <Stack direction="row" spacing={2} alignItems="center">
           {data && (
             <PeriodPicker
-              periodType={periodType}
-              year={effectiveYear}
-              month={effectiveMonth}
-              onPeriodTypeChange={handlePeriodTypeChange}
-              onYearChange={setYear}
-              onMonthChange={setMonth}
-              minDate={minDate}
-              maxDate={maxDate}
+              periodType={period.periodType}
+              year={period.effectiveYear}
+              month={period.effectiveMonth}
+              onPeriodTypeChange={period.onPeriodTypeChange}
+              onYearChange={period.setYear}
+              onMonthChange={period.setMonth}
+              minDate={period.minDate}
+              maxDate={period.maxDate}
               showAllOption
             />
           )}
@@ -555,8 +538,14 @@ export function TransactionsPage() {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => {
-                          if (confirm('Excluir esta transação?')) deleteMutation.mutate(tx.id);
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: 'Excluir transação',
+                            message: 'Tem certeza que deseja excluir esta transação?',
+                            confirmLabel: 'Excluir',
+                            destructive: true,
+                          });
+                          if (ok) deleteMutation.mutate(tx.id);
                         }}
                       >
                         <DeleteIcon fontSize="small" />

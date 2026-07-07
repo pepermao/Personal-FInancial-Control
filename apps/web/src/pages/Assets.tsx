@@ -11,23 +11,11 @@ import { apiClient } from '../api/client';
 import type { AssetDto } from '@ledger/shared';
 import { ASSET_TYPE_LABELS, isRealEstate, sumValue } from '../lib/assetDisplay';
 import { formatBRL } from '../utils/format';
+import { KpiCard } from '../components/KpiCard';
 
 async function fetchAssets() {
   const { data } = await apiClient.get<AssetDto[]>('/assets');
   return data;
-}
-
-function KpiCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Paper sx={{ p: 2.25, height: '100%' }}>
-      <Typography
-        sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: '#98A2A9', textTransform: 'uppercase' }}
-      >
-        {label}
-      </Typography>
-      <Typography sx={{ fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em', mt: 0.5 }}>{value}</Typography>
-    </Paper>
-  );
 }
 
 export function AssetsPage() {
@@ -51,7 +39,7 @@ export function AssetsPage() {
   return (
     <Box>
       <Typography variant="h4">Ativos</Typography>
-      <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
+      <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5, mb: 3 }}>
         Tudo o que você possui, ao longo do tempo
       </Typography>
 
@@ -96,14 +84,14 @@ export function AssetsPage() {
                         sx={{
                           height: 6,
                           borderRadius: 3,
-                          backgroundColor: '#F1F3F5',
-                          '& .MuiLinearProgress-bar': { backgroundColor: '#0E9D63', borderRadius: 3 },
+                          backgroundColor: 'action.hover',
+                          '& .MuiLinearProgress-bar': { backgroundColor: 'success.main', borderRadius: 3 },
                         }}
                       />
                     </Box>
                   ))}
                   {allocation.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhum investimento ainda.</Typography>
+                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Nenhum investimento ainda.</Typography>
                   )}
                 </Stack>
               </Paper>
@@ -119,7 +107,7 @@ export function AssetsPage() {
                     Ver todos
                   </Button>
                 </Stack>
-                <Stack divider={<Box sx={{ borderBottom: '1px solid #F1F3F5' }} />} spacing={1.25}>
+                <Stack divider={<Box sx={{ borderBottom: 1, borderColor: 'divider' }} />} spacing={1.25}>
                   {realEstate.map((asset) => (
                     <Stack key={asset.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.5 }}>
                       <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{asset.name}</Typography>
@@ -127,7 +115,7 @@ export function AssetsPage() {
                     </Stack>
                   ))}
                   {realEstate.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhum imóvel ainda.</Typography>
+                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Nenhum imóvel ainda.</Typography>
                   )}
                 </Stack>
               </Paper>

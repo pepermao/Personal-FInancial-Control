@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -28,7 +28,10 @@ import { CategoryKind, Direction } from '@ledger/shared';
 import type { CategoryDto } from '@ledger/shared';
 import { categoriesApi, qk, readApiError, transactionsApi } from '../api';
 import { formatBRL } from '../utils/format';
-import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
+import { useInvalidate } from '../hooks/useInvalidate';
+import { useConfirm } from '../hooks/useConfirm';
+import { usePeriodState } from '../hooks/usePeriodState';
+import { PeriodPicker } from '../components/PeriodPicker';
 
 const KIND_LABEL: Record<CategoryKind, string> = {
   [CategoryKind.INCOME]: 'Receita',
@@ -61,7 +64,8 @@ interface CategoryFormValues {
 }
 
 export function CategoriesPage() {
-  const queryClient = useQueryClient();
+  const invalidateAll = useInvalidate();
+  const confirm = useConfirm();
   const { data, isLoading, isError } = useQuery({
     queryKey: qk.categories.all(),
     queryFn: categoriesApi.list,
@@ -71,9 +75,10 @@ export function CategoriesPage() {
     queryFn: transactionsApi.list,
   });
 
-  const [periodType, setPeriodType] = useState<PeriodType>('all');
-  const [year, setYear] = useState<string | undefined>(undefined);
-  const [month, setMonth] = useState<string | undefined>(undefined);
+  const period = usePeriodState(
+    { months: (transactions ?? []).map((tx) => tx.competenceMonth) },
+    'all',
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CategoryDto | null>(null);
@@ -85,9 +90,9 @@ export function CategoriesPage() {
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: qk.categories.all() });
-    queryClient.invalidateQueries({ queryKey: qk.transactions.all() });
-    queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+    invalidateAll.categories();
+    invalidateAll.transactions();
+    invalidateAll.dashboard();
   };
 
   const createMutation = useMutation({
@@ -145,27 +150,10 @@ export function CategoriesPage() {
     else createMutation.mutate(form);
   };
 
-  const months = (transactions ?? []).map((tx) => tx.competenceMonth);
-  const earliestMonth = months.length ? months.reduce((a, b) => (a < b ? a : b)) : undefined;
-  const latestMonth = months.length ? months.reduce((a, b) => (a > b ? a : b)) : undefined;
-  const defaultYear = latestMonth?.slice(0, 4) ?? String(new Date().getFullYear());
-  const effectiveYear = year ?? defaultYear;
-  const effectiveMonth = month ?? latestMonth ?? `${effectiveYear}-01`;
-  const minDate = earliestMonth ? monthStringToDate(earliestMonth) : undefined;
-  const maxDate = new Date();
-
-  const handlePeriodTypeChange = (value: PeriodType) => {
-    if (value === periodType) return;
-    if (value === 'month' && !month) setMonth(latestMonth ?? `${effectiveYear}-01`);
-    if (value === 'year' && !year) setYear(defaultYear);
-    setPeriodType(value);
-  };
-
   const totalsByCategory = new Map<string, number>();
   for (const tx of transactions ?? []) {
     if (tx.direction !== Direction.EXPENSE || !tx.impactsDashboardExpense || !tx.categoryId) continue;
-    if (periodType === 'year' && !tx.competenceMonth.startsWith(effectiveYear)) continue;
-    if (periodType === 'month' && tx.competenceMonth !== effectiveMonth) continue;
+    if (!period.includes(tx.competenceMonth)) continue;
     totalsByCategory.set(tx.categoryId, (totalsByCategory.get(tx.categoryId) ?? 0) + Number(tx.amount));
   }
   const topLevel = data?.filter((category) => !category.parentId) ?? [];
@@ -182,21 +170,21 @@ export function CategoriesPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4">Categorias</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>
             Padrões de gastos por categoria
           </Typography>
         </Box>
         <Stack direction="row" spacing={2} alignItems="center">
           {transactions && (
             <PeriodPicker
-              periodType={periodType}
-              year={effectiveYear}
-              month={effectiveMonth}
-              onPeriodTypeChange={handlePeriodTypeChange}
-              onYearChange={setYear}
-              onMonthChange={setMonth}
-              minDate={minDate}
-              maxDate={maxDate}
+              periodType={period.periodType}
+              year={period.effectiveYear}
+              month={period.effectiveMonth}
+              onPeriodTypeChange={period.onPeriodTypeChange}
+              onYearChange={period.setYear}
+              onMonthChange={period.setMonth}
+              minDate={period.minDate}
+              maxDate={period.maxDate}
               showAllOption
             />
           )}
@@ -238,7 +226,7 @@ export function CategoriesPage() {
                       {formatBRL(total ?? 0)}
                     </Typography>
                     {!total && (
-                      <Typography sx={{ fontSize: 12, color: '#7A868E', mt: 0.5 }}>
+                      <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.5 }}>
                         Nenhum gasto registrado
                       </Typography>
                     )}
@@ -249,7 +237,7 @@ export function CategoriesPage() {
             {topLevel.length === 0 && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography sx={{ color: '#7A868E' }}>Nenhuma categoria ainda.</Typography>
+                  <Typography sx={{ color: 'text.secondary' }}>Nenhuma categoria ainda.</Typography>
                 </Paper>
               </Grid>
             )}
@@ -286,8 +274,14 @@ export function CategoriesPage() {
                           </IconButton>
                           <IconButton
                             size="small"
-                            onClick={() => {
-                              if (confirm(`Excluir "${category.name}"?`)) deleteMutation.mutate(category.id);
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: 'Excluir categoria',
+                                message: `Excluir "${category.name}"? Transações vinculadas ficarão sem categoria.`,
+                                confirmLabel: 'Excluir',
+                                destructive: true,
+                              });
+                              if (ok) deleteMutation.mutate(category.id);
                             }}
                           >
                             <DeleteIcon fontSize="small" />

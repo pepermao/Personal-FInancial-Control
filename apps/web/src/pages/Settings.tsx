@@ -6,12 +6,12 @@ export function SettingsPage() {
   return (
     <Box>
       <Typography variant="h4">Configurações</Typography>
-      <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5, mb: 3 }}>
+      <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5, mb: 3 }}>
         Preferências e configuração do espaço
       </Typography>
 
       <Paper sx={{ p: 3, maxWidth: 480 }}>
-        <Typography sx={{ color: '#7A868E' }}>Em breve.</Typography>
+        <Typography sx={{ color: 'text.secondary' }}>Em breve.</Typography>
       </Paper>
     </Box>
   );

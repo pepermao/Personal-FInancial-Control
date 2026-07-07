@@ -25,12 +25,12 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 };
 
 export const ASSET_TYPE_COLORS: Record<AssetType, { bg: string; color: string }> = {
-  [AssetType.CDB]: { bg: '#EAF7F1', color: '#0E9D63' },
-  [AssetType.LCI]: { bg: '#EAF7F1', color: '#0E9D63' },
-  [AssetType.LCA]: { bg: '#EAF7F1', color: '#0E9D63' },
-  [AssetType.TESOURO_SELIC]: { bg: '#EAF7F1', color: '#0E9D63' },
-  [AssetType.TESOURO_IPCA]: { bg: '#EAF7F1', color: '#0E9D63' },
-  [AssetType.TESOURO_PREFIXADO]: { bg: '#EAF7F1', color: '#0E9D63' },
+  [AssetType.CDB]: { bg: '#EAF7F1', color: 'success.main' },
+  [AssetType.LCI]: { bg: '#EAF7F1', color: 'success.main' },
+  [AssetType.LCA]: { bg: '#EAF7F1', color: 'success.main' },
+  [AssetType.TESOURO_SELIC]: { bg: '#EAF7F1', color: 'success.main' },
+  [AssetType.TESOURO_IPCA]: { bg: '#EAF7F1', color: 'success.main' },
+  [AssetType.TESOURO_PREFIXADO]: { bg: '#EAF7F1', color: 'success.main' },
   [AssetType.POUPANCA]: { bg: '#EEF1F3', color: '#3B4E5C' },
   [AssetType.ACOES]: { bg: '#EEF1F3', color: '#3B4E5C' },
   [AssetType.FII]: { bg: '#EEF1F3', color: '#3B4E5C' },
@@ -93,7 +93,7 @@ export function AssetCard({
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
         <Box>
           <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{asset.name}</Typography>
-          <Typography sx={{ fontSize: 12, color: '#7A868E', mt: 0.25 }}>
+          <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>
             {new Date(asset.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
           </Typography>
         </Box>
@@ -107,7 +107,7 @@ export function AssetCard({
         {formatBRL(asset.value)}
       </Typography>
       {rateLabel && (
-        <Typography sx={{ fontSize: 12, color: '#0E9D63', fontWeight: 700, mt: 0.5 }}>{rateLabel}</Typography>
+        <Typography sx={{ fontSize: 12, color: 'success.main', fontWeight: 700, mt: 0.5 }}>{rateLabel}</Typography>
       )}
       <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
         <IconButton size="small" onClick={() => onEdit(asset)}>

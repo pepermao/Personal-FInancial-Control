@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import LinearProgress from '@mui/material/LinearProgress';
+import { useTheme } from '@mui/material/styles';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -13,23 +14,14 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { dashboardApi, periodKey, qk } from '../api';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 import { formatBRL } from '../utils/format';
+import { KpiCard } from '../components/KpiCard';
 
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-function KpiCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Paper sx={{ p: 2.25, height: '100%' }}>
-      <Typography
-        sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: '#98A2A9', textTransform: 'uppercase' }}
-      >
-        {label}
-      </Typography>
-      <Typography sx={{ fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em', mt: 0.5 }}>{value}</Typography>
-    </Paper>
-  );
-}
-
 export function DashboardPage() {
+  const theme = useTheme();
+  const successColor = theme.palette.success.main;
+  const errorColor = theme.palette.error.main;
   const [periodType, setPeriodType] = useState<PeriodType>('year');
   const [year, setYear] = useState<string | undefined>(undefined);
   const [month, setMonth] = useState<string | undefined>(undefined);
@@ -85,7 +77,7 @@ export function DashboardPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4">Painel</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>
             Sua posição financeira num relance
           </Typography>
         </Box>
@@ -142,14 +134,14 @@ export function DashboardPage() {
               </Typography>
               <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
                 {netWorthChange >= 0 ? (
-                  <ArrowUpwardIcon sx={{ fontSize: 14, color: '#0E9D63' }} />
+                  <ArrowUpwardIcon sx={{ fontSize: 14, color: 'success.main' }} />
                 ) : (
-                  <ArrowDownwardIcon sx={{ fontSize: 14, color: '#C7443F' }} />
+                  <ArrowDownwardIcon sx={{ fontSize: 14, color: 'error.main' }} />
                 )}
-                <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: netWorthChange >= 0 ? '#0E9D63' : '#C7443F' }}>
+                <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: netWorthChange >= 0 ? 'success.main' : 'error.main' }}>
                   {formatBRL(Math.abs(netWorthChange))}
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: '#7A868E' }}>nos últimos 12 meses</Typography>
+                <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }}>nos últimos 12 meses</Typography>
               </Stack>
               <LineChart
                 height={280}
@@ -157,7 +149,7 @@ export function DashboardPage() {
                   {
                     data: netWorthValues,
                     area: true,
-                    color: '#0E9D63',
+                    color: successColor,
                     showMark: false,
                   },
                 ]}
@@ -198,7 +190,7 @@ export function DashboardPage() {
                       colorMap: {
                         type: 'piecewise',
                         thresholds: [0],
-                        colors: ['#C7443F', '#0E9D63'],
+                        colors: [errorColor, successColor],
                       },
                     },
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -223,12 +215,12 @@ export function DashboardPage() {
                       {
                         data: cashFlow.series.map((point) => Number(point.income)),
                         label: 'Receita',
-                        color: '#0E9D63',
+                        color: successColor,
                       },
                       {
                         data: cashFlow.series.map((point) => Number(point.expense)),
                         label: 'Despesa',
-                        color: '#C7443F',
+                        color: errorColor,
                       },
                     ]}
                     xAxis={[
@@ -261,14 +253,14 @@ export function DashboardPage() {
                         sx={{
                           height: 6,
                           borderRadius: 3,
-                          backgroundColor: '#F1F3F5',
-                          '& .MuiLinearProgress-bar': { backgroundColor: '#16202A', borderRadius: 3 },
+                          backgroundColor: 'action.hover',
+                          '& .MuiLinearProgress-bar': { backgroundColor: 'primary.main', borderRadius: 3 },
                         }}
                       />
                     </Box>
                   ))}
                   {data.byCategory.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma despesa neste período.</Typography>
+                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Nenhuma despesa neste período.</Typography>
                   )}
                 </Stack>
               </Paper>
@@ -279,7 +271,7 @@ export function DashboardPage() {
             <Typography variant="h6" sx={{ fontSize: 16, mb: 2 }}>
               Contas
             </Typography>
-            <Stack divider={<Box sx={{ borderBottom: '1px solid #F1F3F5' }} />} spacing={1.25}>
+            <Stack divider={<Box sx={{ borderBottom: 1, borderColor: 'divider' }} />} spacing={1.25}>
               {data.byAccount.map((account) => (
                 <Stack
                   key={account.accountId}
@@ -290,13 +282,13 @@ export function DashboardPage() {
                 >
                   <Box>
                     <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{account.accountName}</Typography>
-                    <Typography sx={{ fontSize: 12, color: '#7A868E' }}>{account.bankName}</Typography>
+                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{account.bankName}</Typography>
                   </Box>
                   <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{formatBRL(account.balance)}</Typography>
                 </Stack>
               ))}
               {data.byAccount.length === 0 && (
-                <Typography sx={{ fontSize: 13, color: '#7A868E' }}>Nenhuma conta ainda.</Typography>
+                <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Nenhuma conta ainda.</Typography>
               )}
             </Stack>
           </Paper>

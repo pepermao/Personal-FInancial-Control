@@ -114,7 +114,7 @@ export function RealEstatePage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4">Imóveis</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>
             Propriedades e patrimônio imobiliário
           </Typography>
         </Box>
@@ -133,7 +133,7 @@ export function RealEstatePage() {
 
       {data && (
         <>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mb: 2 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2 }}>
             Valor total: {formatBRL(sumValue(realEstate))}
           </Typography>
 
@@ -146,7 +146,7 @@ export function RealEstatePage() {
             {realEstate.length === 0 && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography sx={{ color: '#7A868E' }}>Nenhum imóvel ainda.</Typography>
+                  <Typography sx={{ color: 'text.secondary' }}>Nenhum imóvel ainda.</Typography>
                 </Paper>
               </Grid>
             )}

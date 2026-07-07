@@ -71,9 +71,9 @@ function categoryLabel(category: CategoryDto, categoriesById: Map<string, Catego
   return parent ? `${parent.name} > ${category.name}` : category.name;
 }
 
-const labelSx = { fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: '#98A2A9', textTransform: 'uppercase' as const };
-const pillSx = { bgcolor: '#F1F3F5', color: '#16202A', fontWeight: 700 };
-const valuePillSx = { bgcolor: '#EAF7F1', color: '#0E9D63', fontWeight: 700 };
+const labelSx = { fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase' as const };
+const pillSx = { bgcolor: 'action.selected', color: 'text.primary', fontWeight: 700 };
+const valuePillSx = { bgcolor: '#EAF7F1', color: 'success.main', fontWeight: 700 };
 
 export function RulesPage() {
   const queryClient = useQueryClient();
@@ -140,7 +140,7 @@ export function RulesPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4">Regras de classificação</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>
             Automatize como as transações são organizadas
           </Typography>
         </Box>
@@ -166,12 +166,12 @@ export function RulesPage() {
                   <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
                     <Typography sx={labelSx}>Se</Typography>
                     <Chip label="Descrição" size="small" sx={pillSx} />
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>contém</Typography>
+                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>contém</Typography>
                     <Chip label={rule.pattern} size="small" sx={valuePillSx} />
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>→</Typography>
+                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>→</Typography>
                     <Typography sx={labelSx}>Então</Typography>
                     <Chip label="Categoria" size="small" sx={pillSx} />
-                    <Typography sx={{ fontSize: 13, color: '#7A868E' }}>=</Typography>
+                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>=</Typography>
                     <Chip
                       label={rule.subcategory ? `${rule.category?.name ?? '-'} / ${rule.subcategory}` : rule.category?.name ?? '-'}
                       size="small"
@@ -195,7 +195,7 @@ export function RulesPage() {
             ))}
             {data.length === 0 && (
               <Paper sx={{ p: 3, textAlign: 'center' }}>
-                <Typography sx={{ color: '#7A868E' }}>Nenhuma regra ainda.</Typography>
+                <Typography sx={{ color: 'text.secondary' }}>Nenhuma regra ainda.</Typography>
               </Paper>
             )}
           </Stack>

@@ -135,7 +135,7 @@ export function InvestmentsPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4">Investimentos</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>
             CDB, Tesouro Direto, ações, fundos e outros
           </Typography>
         </Box>
@@ -154,7 +154,7 @@ export function InvestmentsPage() {
 
       {data && (
         <>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mb: 2 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2 }}>
             Total investido: {formatBRL(sumValue(investments))}
           </Typography>
 
@@ -167,7 +167,7 @@ export function InvestmentsPage() {
             {investments.length === 0 && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography sx={{ color: '#7A868E' }}>Nenhum investimento ainda.</Typography>
+                  <Typography sx={{ color: 'text.secondary' }}>Nenhum investimento ainda.</Typography>
                 </Paper>
               </Grid>
             )}

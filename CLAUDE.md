@@ -109,5 +109,122 @@ Rule matching (in imports and in `POST /transactions/reclassify`) uses `descript
 
 Standard REST CRUD for each resource module. Notable non-CRUD:
 - `POST /imports/csv` — multipart, field `file`, body `accountId` (+ optional `initialBalance`, `endBalance`). Returns `{ imported, duplicated, needsReview, historical }`.
+- `POST /imports/csv/bulk` — multipart, field `files` (up to 50), body `accountId` (+ optional `initialBalance`/`endBalance` **only** when a single file is uploaded). Returns `{ results: [...] }` per file.
 - `GET /dashboard/summary?month=YYYY-MM` — aggregates by category + account, computes `netWorth = totalAccountsBalance + totalAssetsValue`.
 - `GET /transactions` supports filters: account, category, month (competenceMonth), direction.
+
+## Conventions
+
+Follow these when adding features. They keep the codebase easy to navigate for humans and AI agents alike.
+
+### Shared package is contract-first
+
+Any new persisted field or enum:
+1. Add to `packages/shared/src/index.ts` first (`enum` or `interface XxxDto`).
+2. Rebuild shared: `pnpm --filter @ledger/shared build`.
+3. Mirror the enum in `apps/api/prisma/schema.prisma` if it's a Prisma enum, then `pnpm db:migrate --name descriptive_name`.
+4. Update backend service to include the field. **Never** import Prisma-generated enums in service code that also touches shared DTOs — the two types are nominally distinct. If you must cross the boundary, accept `string` and compare against `CategoryKind`/`Direction` values from `@ledger/shared`.
+
+### Backend resource module template
+
+Each resource has this exact shape under `apps/api/src/<resource>/`:
+
+```
+<resource>/
+  <resource>.module.ts       // NestJS @Module wiring controller + service
+  <resource>.controller.ts   // HTTP layer, uses UpdateXxxDto = PartialType(CreateXxxDto)
+  <resource>.service.ts      // findAll / findOne / create / update / remove
+  dto/
+    create-xxx.dto.ts        // class-validator decorators (@IsUUID, @IsEnum, etc.)
+    update-xxx.dto.ts        // extends PartialType(CreateXxxDto)
+    query-xxx.dto.ts         // optional filter DTO for list endpoints
+```
+
+Global `ValidationPipe` is active — all body/query DTOs are auto-validated. Add `@IsOptional()` on optional fields.
+
+### Frontend: API modules + query keys
+
+Every backend resource has a matching `apps/web/src/api/<resource>.ts` exporting a plain object with `list/create/update/remove` (+ resource-specific extras). Pages **must** import from `../api` (barrel export), never from `../api/client` directly.
+
+```ts
+// apps/web/src/api/foos.ts
+import type { FooDto } from '@ledger/shared';
+import { apiClient } from './client';
+
+export const foosApi = {
+  list: async (): Promise<FooDto[]> => (await apiClient.get('/foos')).data,
+  create: async (input: FooInput) => (await apiClient.post('/foos', input)).data,
+  // ...
+};
+```
+
+Register the query key in `apps/web/src/api/queryKeys.ts`:
+
+```ts
+export const qk = {
+  // ...existing
+  foos: { all: () => ['foos'] as const },
+};
+```
+
+Then in the page:
+
+```ts
+const { data } = useQuery({ queryKey: qk.foos.all(), queryFn: foosApi.list });
+```
+
+### Frontend: hooks catalogue (use these, don't reinvent)
+
+- `useInvalidate()` — named cache-invalidation scopes. Every mutation must invalidate `transactions()`, `dashboard()`, etc., not hand-write `queryClient.invalidateQueries`.
+- `useConfirm()` — `await confirm({ title, message, destructive })` → `Promise<boolean>`. Never call `window.confirm()`; it breaks dark mode and can't be tested.
+- `usePeriodState(bounds)` — folds year/month/periodType state + defaults + `.includes(competenceMonth)` filter. Bounds are `{ months?, earliestMonth?, latestMonth? }`. Does not fit Dashboard (whose bounds come from the API response); prefer inline state there.
+- `usePagination(defaultRowsPerPage)` — `{ page, rowsPerPage, paginate, handleChangePage, handleChangeRowsPerPage }`.
+
+### Frontend: shared components
+
+- `<KpiCard label value />` — stat tile. Used on Dashboard + Assets.
+- `<MoneyCell value colorSigned bold />` — formatted BRL amount with optional sign coloring.
+- `<EmptyState title description icon action />` — empty-state layout.
+- `<ErrorBoundary>` — mounted at root in `main.tsx`; children can throw safely.
+
+### Errors and money
+
+- Frontend mutations must set `onError: (err: unknown) => setFormError(readApiError(err, 'fallback pt-BR'))`. Never type errors as `any`. `readApiError` extracts message from AxiosError, plain Error, or falls back.
+- Every currency string on screen must go through `formatBRL(value)` from `src/utils/format.ts`. Never `'R$ ${value}'`.
+
+### Colors and theming
+
+Never hardcode hex colors in a `sx` prop. Use `theme.palette` semantic keys:
+
+| Instead of… | Use… |
+| --- | --- |
+| `color: '#7A868E'` (grey text) | `color: 'text.secondary'` |
+| `color: '#0E9D63'` (green) | `color: 'success.main'` |
+| `color: '#C7443F'` (red) | `color: 'error.main'` |
+| `backgroundColor: '#F1F3F5'` (rail) | `backgroundColor: 'action.hover'` |
+| `backgroundColor: '#16202A'` (dark accent) | `backgroundColor: 'primary.main'` |
+| `borderBottom: '1px solid #F1F3F5'` | `borderBottom: 1, borderColor: 'divider'` |
+
+**Exception**: MUI x-charts (`BarChart`, `LineChart`) doesn't resolve palette keys — pull real hex via `const { palette } = useTheme();` and pass `palette.success.main`.
+
+Decorative pastel chip maps (asset/account-type badges in `assetDisplay.tsx` + `Accounts.tsx`) are intentional brand color choices, not theme greys — leave them.
+
+### Copy is pt-BR
+
+All UI strings, empty states, alerts, error messages, tooltips: Portuguese. Match casing/tone of existing copy (`Nova transação`, `Sem categoria`, `Excluir`, etc.).
+
+### File-splitting heuristic
+
+Pages > 500 LOC get split into sibling component files under the same folder (or a subfolder for tightly-coupled ones). Rule of thumb: dialog/form + table/list + filters + toolbar all deserve their own file once the page has all four.
+
+### Testing conventions
+
+- Colocate `*.test.ts` next to source.
+- Unit-test pure functions first (`impactOf`, `normalizeDescription`, `formatBRL`).
+- Integration tests for services that touch Prisma should stub `PrismaService`.
+- React component tests need `@testing-library/react` (not installed yet).
+
+### Not established yet (safe to introduce)
+
+- Uniform backend error shape (`ApiErrorDto`) — currently NestJS defaults leak through.
+- Per-page conventions differ between older pages (Accounts, Rules, Investments, RealEstate — still use inline `apiClient` + native `confirm()`) and migrated ones (Transactions, Categories, Dashboard, Imports). New work should follow the migrated shape; sweep old pages when touched.

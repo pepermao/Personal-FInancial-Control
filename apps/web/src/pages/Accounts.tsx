@@ -34,8 +34,8 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 };
 
 const ACCOUNT_TYPE_COLORS: Record<AccountType, { bg: string; color: string }> = {
-  [AccountType.CHECKING]: { bg: '#EAF7F1', color: '#0E9D63' },
-  [AccountType.SAVINGS]: { bg: '#EAF7F1', color: '#0E9D63' },
+  [AccountType.CHECKING]: { bg: '#EAF7F1', color: 'success.main' },
+  [AccountType.SAVINGS]: { bg: '#EAF7F1', color: 'success.main' },
   [AccountType.INVESTMENT]: { bg: '#EEF1F3', color: '#3B4E5C' },
   [AccountType.CREDIT_CARD]: { bg: '#F1F3F5', color: '#55636E' },
   [AccountType.OTHER]: { bg: '#F1F3F5', color: '#55636E' },
@@ -145,7 +145,7 @@ export function AccountsPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4">Contas</Typography>
-          <Typography sx={{ fontSize: 13, color: '#7A868E', mt: 0.5 }}>Saldos de todas as contas conectadas</Typography>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>Saldos de todas as contas conectadas</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
           Nova conta
@@ -168,7 +168,7 @@ export function AccountsPage() {
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                       <Box>
                         <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{account.name}</Typography>
-                        <Typography sx={{ fontSize: 12, color: '#7A868E', mt: 0.25 }}>
+                        <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>
                           {account.bank?.name ?? '-'}
                           {account.accountNumber ? ` · ••${account.accountNumber}` : ''}
                         </Typography>
@@ -205,7 +205,7 @@ export function AccountsPage() {
             {accounts.length === 0 && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography sx={{ color: '#7A868E' }}>Nenhuma conta ainda.</Typography>
+                  <Typography sx={{ color: 'text.secondary' }}>Nenhuma conta ainda.</Typography>
                 </Paper>
               </Grid>
             )}
