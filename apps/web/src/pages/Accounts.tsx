@@ -20,7 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { apiClient } from '../api/client';
-import { formatBRL } from '../utils/format';
+import { formatBRL, parseBRLInput } from '../utils/format';
 import { AccountType } from '@ledger/shared';
 import type { AccountDto, BankDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
@@ -76,7 +76,7 @@ function toPayload(form: AccountFormState) {
     name: form.name,
     type: form.type,
     accountNumber: form.accountNumber || undefined,
-    initialBalance: form.initialBalance || '0',
+    initialBalance: parseBRLInput(form.initialBalance) || '0',
     notes: form.notes || undefined,
   };
 }
@@ -269,10 +269,12 @@ export function AccountsPage() {
 
             <TextField
               label="Saldo inicial"
-              type="number"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ex.: 11.969,80"
               value={form.initialBalance}
               onChange={(e) => setForm({ ...form, initialBalance: e.target.value })}
-              helperText="Saldo de partida; o saldo atual da conta é esse valor mais as transações."
+              helperText="Saldo de partida (aceita 11.969,80 ou 11969.80)."
             />
 
             <TextField

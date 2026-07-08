@@ -38,7 +38,7 @@ import {
   transactionsApi,
   type TransactionWithRelations,
 } from '../api';
-import { formatBRL } from '../utils/format';
+import { formatBRL, parseBRLInput } from '../utils/format';
 import { usePagination } from '../hooks/usePagination';
 import { useInvalidate } from '../hooks/useInvalidate';
 import { useConfirm } from '../hooks/useConfirm';
@@ -90,7 +90,7 @@ function toTxPayload(values: TransactionFormValues) {
     date: date.toISOString(),
     competenceMonth,
     descriptionRaw: values.descriptionRaw,
-    amount: values.amount,
+    amount: parseBRLInput(values.amount),
     direction: values.direction,
     categoryId: values.categoryId ?? undefined,
     notes: values.notes || undefined,
@@ -260,7 +260,7 @@ export function TransactionsPage() {
   const submitForm = () => {
     if (!form.accountId) return setFormError('Selecione uma conta');
     if (!form.descriptionRaw.trim()) return setFormError('Descrição obrigatória');
-    if (!form.amount || Number.isNaN(Number(form.amount))) return setFormError('Valor inválido');
+    if (!form.amount || Number.isNaN(Number(parseBRLInput(form.amount)))) return setFormError('Valor inválido');
     if (editingTx) editMutation.mutate({ id: editingTx.id, values: form });
     else createMutation.mutate(form);
   };
@@ -609,7 +609,9 @@ export function TransactionsPage() {
             />
             <TextField
               label="Valor"
-              type="number"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ex.: 1.234,56"
               value={form.amount}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
               fullWidth

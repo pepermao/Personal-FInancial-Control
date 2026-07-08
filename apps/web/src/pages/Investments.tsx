@@ -19,7 +19,7 @@ import { apiClient } from '../api/client';
 import { AssetType, ProfitRateType } from '@ledger/shared';
 import type { AssetDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
-import { formatBRL } from '../utils/format';
+import { formatBRL, parseBRLInput } from '../utils/format';
 import {
   ASSET_TYPE_LABELS,
   AssetCard,
@@ -63,9 +63,9 @@ function toPayload(form: AssetFormState) {
   return {
     name: form.name,
     type: form.type,
-    value: form.value || '0',
+    value: parseBRLInput(form.value) || '0',
     profitRateType: hasRate ? form.profitRateType : ProfitRateType.NONE,
-    profitRate: hasRate && form.profitRate ? form.profitRate : undefined,
+    profitRate: hasRate && form.profitRate ? parseBRLInput(form.profitRate) : undefined,
     date: form.date || undefined,
     notes: form.notes || undefined,
   };
@@ -223,7 +223,9 @@ export function InvestmentsPage() {
 
             <TextField
               label="Valor investido"
-              type="number"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ex.: 101.000,00"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
               required
@@ -247,7 +249,8 @@ export function InvestmentsPage() {
                 {form.profitRateType !== ProfitRateType.NONE && (
                   <TextField
                     label="Taxa (%)"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={form.profitRate}
                     onChange={(e) => setForm({ ...form, profitRate: e.target.value })}
                     helperText={

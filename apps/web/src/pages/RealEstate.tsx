@@ -19,7 +19,7 @@ import { AssetType, ProfitRateType } from '@ledger/shared';
 import type { AssetDto } from '@ledger/shared';
 import { usePagination } from '../hooks/usePagination';
 import { AssetCard, isRealEstate, sumValue } from '../lib/assetDisplay';
-import { formatBRL } from '../utils/format';
+import { formatBRL, parseBRLInput } from '../utils/format';
 
 interface RealEstateFormState {
   id?: string;
@@ -47,7 +47,7 @@ function toPayload(form: RealEstateFormState) {
   return {
     name: form.name,
     type: AssetType.REAL_ESTATE,
-    value: form.value || '0',
+    value: parseBRLInput(form.value) || '0',
     profitRateType: ProfitRateType.NONE,
     date: form.date || undefined,
     notes: form.notes || undefined,
@@ -180,7 +180,9 @@ export function RealEstatePage() {
 
             <TextField
               label="Valor"
-              type="number"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ex.: 250.000,00"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
               required

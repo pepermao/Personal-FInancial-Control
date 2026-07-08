@@ -14,6 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { accountsApi, importsApi, qk } from '../api';
+import { parseBRLInput } from '../utils/format';
 
 export function ImportsPage() {
   const queryClient = useQueryClient();
@@ -27,7 +28,12 @@ export function ImportsPage() {
   const mutation = useMutation({
     mutationFn: () => {
       if (!accountId || files.length === 0) throw new Error('Selecione uma conta e pelo menos um arquivo CSV');
-      return importsApi.bulk({ accountId, files, initialBalance, endBalance });
+      return importsApi.bulk({
+        accountId,
+        files,
+        initialBalance: parseBRLInput(initialBalance),
+        endBalance: parseBRLInput(endBalance),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.accounts.all() });
@@ -136,17 +142,21 @@ export function ImportsPage() {
             <>
               <TextField
                 label="Saldo inicial deste período (opcional)"
-                type="number"
+                type="text"
+                inputMode="decimal"
+                placeholder="Ex.: 11.969,80"
                 value={initialBalance}
                 onChange={(e) => setInitialBalance(e.target.value)}
                 helperText="Se preenchido, substitui o saldo inicial da conta por este valor antes de importar."
               />
               <TextField
                 label="Saldo final deste período (opcional)"
-                type="number"
+                type="text"
+                inputMode="decimal"
+                placeholder="Ex.: 11.969,80"
                 value={endBalance}
                 onChange={(e) => setEndBalance(e.target.value)}
-                helperText="Apenas para referência. O app detecta extratos históricos automaticamente."
+                helperText="Aceita formato brasileiro (11.969,80) ou inglês (11969.80)."
               />
             </>
           )}
