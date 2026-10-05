@@ -1,4 +1,4 @@
-import type { ClassificationRuleDto } from '@ledger/shared';
+import type { ClassificationRuleDto } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface RuleInput {

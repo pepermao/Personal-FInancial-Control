@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Run from repo root (pnpm workspaces). `@ledger/shared` must be built before `apps/*` because it emits both ESM and CJS artifacts consumed by web (ESM) and api (CJS) — the root `dev`/`build` scripts already do this.
+Run from repo root (pnpm workspaces). `@kevin/shared` must be built before `apps/*` because it emits both ESM and CJS artifacts consumed by web (ESM) and api (CJS) — the root `dev`/`build` scripts already do this.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Build `@ledger/shared`, then run api (`nest start --watch`, :3001) and web (`vite`, :5173) in parallel |
+| `pnpm dev` | Build `@kevin/shared`, then run api (`nest start --watch`, :3001) and web (`vite`, :5173) in parallel |
 | `pnpm build` | Build shared, then both apps |
 | `pnpm lint` | ESLint across both apps |
 | `pnpm format` | Prettier over `apps/**/src` and `packages/**/src` |
@@ -18,7 +18,7 @@ Run from repo root (pnpm workspaces). `@ledger/shared` must be built before `app
 | `pnpm test` | Runs Vitest in both apps (`--recursive`) |
 | `docker compose up -d` | Starts Postgres 16 on host port **5434** (mapped to container 5432), user/pass/db all `ledger` |
 
-Per-app scripts (run with `pnpm --filter @ledger/api <script>` or `--filter @ledger/web`):
+Per-app scripts (run with `pnpm --filter @kevin/api <script>` or `--filter @kevin/web`):
 - api: `dev`, `build`, `start` (runs `dist/main.js`), `lint`, `test`, `test:watch`, `test:coverage`, `prisma:generate`, `prisma:migrate`, `prisma:deploy`, `prisma:seed`, `prisma:studio`
 - web: `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `test`, `test:watch`, `test:coverage`
 
@@ -29,15 +29,15 @@ Both apps use **Vitest 2** (pinned to `^2` — Vitest 4 requires Vite 6, we're o
 - **Configs**: `apps/api/vitest.config.ts` (node env), `apps/web/vitest.config.ts` (jsdom env + `@vitejs/plugin-react`).
 - **File glob**: `src/**/*.{test,spec}.{ts,tsx}` — colocate tests next to source.
 - **Globals enabled**: `describe`, `it`, `expect` available without imports (but existing samples import them explicitly).
-- **Coverage**: `@vitest/coverage-v8` — run `pnpm --filter @ledger/api test:coverage` (or `--filter @ledger/web`).
+- **Coverage**: `@vitest/coverage-v8` — run `pnpm --filter @kevin/api test:coverage` (or `--filter @kevin/web`).
 
 ### Run
 
 ```bash
 pnpm test                                    # both apps, in parallel
-pnpm --filter @ledger/api test               # single app
-pnpm --filter @ledger/web test:watch         # watch mode
-pnpm --filter @ledger/api test:coverage      # + coverage report
+pnpm --filter @kevin/api test               # single app
+pnpm --filter @kevin/web test:watch         # watch mode
+pnpm --filter @kevin/api test:coverage      # + coverage report
 ```
 
 ### Add a test
@@ -77,7 +77,7 @@ Monorepo with three workspaces: `apps/api` (NestJS), `apps/web` (React+Vite+MUI)
 
 `packages/shared/src/index.ts` is the single source of truth for enums (`Direction`, `TransactionType`, `TransactionNature`, `AssetType`, `ProfitRateType`, `AccountType`) and DTO interfaces. Prisma's `schema.prisma` re-declares matching enums — **they must be kept in sync manually**. Any enum change requires: update shared → rebuild shared → update `schema.prisma` → `pnpm db:migrate`.
 
-The package ships dual-format (`tsconfig.esm.json` + `tsconfig.cjs.json`). Both apps import from `@ledger/shared` via workspace protocol.
+The package ships dual-format (`tsconfig.esm.json` + `tsconfig.cjs.json`). Both apps import from `@kevin/shared` via workspace protocol.
 
 ### API (NestJS + Prisma)
 
@@ -194,9 +194,9 @@ Follow these when adding features. They keep the codebase easy to navigate for h
 
 Any new persisted field or enum:
 1. Add to `packages/shared/src/index.ts` first (`enum` or `interface XxxDto`).
-2. Rebuild shared: `pnpm --filter @ledger/shared build`.
+2. Rebuild shared: `pnpm --filter @kevin/shared build`.
 3. Mirror the enum in `apps/api/prisma/schema.prisma` if it's a Prisma enum, then `pnpm db:migrate --name descriptive_name`.
-4. Update backend service to include the field. **Never** import Prisma-generated enums in service code that also touches shared DTOs — the two types are nominally distinct. If you must cross the boundary, accept `string` and compare against `CategoryKind`/`Direction` values from `@ledger/shared`.
+4. Update backend service to include the field. **Never** import Prisma-generated enums in service code that also touches shared DTOs — the two types are nominally distinct. If you must cross the boundary, accept `string` and compare against `CategoryKind`/`Direction` values from `@kevin/shared`.
 
 ### Backend resource module template
 
@@ -221,7 +221,7 @@ Every backend resource has a matching `apps/web/src/api/<resource>.ts` exporting
 
 ```ts
 // apps/web/src/api/foos.ts
-import type { FooDto } from '@ledger/shared';
+import type { FooDto } from '@kevin/shared';
 import { apiClient } from './client';
 
 export const foosApi = {

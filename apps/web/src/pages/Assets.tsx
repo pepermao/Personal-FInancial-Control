@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import { apiClient } from '../api/client';
-import type { AssetDto } from '@ledger/shared';
+import type { AssetDto } from '@kevin/shared';
 import { ASSET_TYPE_LABELS, sumValue } from '../lib/assetDisplay';
 import { formatBRL } from '../utils/format';
 import { KpiCard } from '../components/KpiCard';

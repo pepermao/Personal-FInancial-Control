@@ -1,4 +1,4 @@
-import type { AccountDto, AccountType } from '@ledger/shared';
+import type { AccountDto, AccountType } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface AccountInput {

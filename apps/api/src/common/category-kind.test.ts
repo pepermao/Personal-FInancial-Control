@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CategoryKind, Direction } from '@ledger/shared';
+import { CategoryKind, Direction } from '@kevin/shared';
 import { impactOf } from './category-kind';
 
 describe('impactOf', () => {

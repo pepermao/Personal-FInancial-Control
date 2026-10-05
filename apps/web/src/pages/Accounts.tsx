@@ -21,8 +21,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { apiClient } from '../api/client';
 import { formatBRL, parseBRLInput } from '../utils/format';
-import { AccountType } from '@ledger/shared';
-import type { AccountDto, BankDto } from '@ledger/shared';
+import { AccountType } from '@kevin/shared';
+import type { AccountDto, BankDto } from '@kevin/shared';
 import { usePagination } from '../hooks/usePagination';
 
 const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {

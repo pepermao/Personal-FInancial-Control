@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AccountType, AssetType, Direction, ProfitRateType, TransactionType } from '@ledger/shared';
+import { AccountType, AssetType, Direction, ProfitRateType, TransactionType } from '@kevin/shared';
 import {
   compeFromTransferNumber,
   investmentValue,

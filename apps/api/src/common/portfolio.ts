@@ -1,4 +1,4 @@
-import { AssetType } from '@ledger/shared';
+import { AssetType } from '@kevin/shared';
 
 /**
  * FGC guarantees deposits and these credit instruments, up to R$250k per CPF per

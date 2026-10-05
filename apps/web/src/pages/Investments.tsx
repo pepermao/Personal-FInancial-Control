@@ -16,8 +16,8 @@ import Alert from '@mui/material/Alert';
 import TablePagination from '@mui/material/TablePagination';
 import AddIcon from '@mui/icons-material/Add';
 import { apiClient } from '../api/client';
-import { AssetType, ProfitRateType } from '@ledger/shared';
-import type { AssetDto } from '@ledger/shared';
+import { AssetType, ProfitRateType } from '@kevin/shared';
+import type { AssetDto } from '@kevin/shared';
 import { usePagination } from '../hooks/usePagination';
 import { formatBRL, parseBRLInput } from '../utils/format';
 import {

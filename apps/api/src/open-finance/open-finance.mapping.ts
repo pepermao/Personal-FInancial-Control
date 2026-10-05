@@ -1,4 +1,4 @@
-import { AccountType, AssetType, Direction, ProfitRateType, TransactionType } from '@ledger/shared';
+import { AccountType, AssetType, Direction, ProfitRateType, TransactionType } from '@kevin/shared';
 import { normalizeDescription } from '../common/normalize';
 import type { PluggyAccount, PluggyInvestment, PluggyTransaction } from './pluggy.client';
 

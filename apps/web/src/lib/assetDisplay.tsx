@@ -6,8 +6,8 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { AssetType, ProfitRateType } from '@ledger/shared';
-import type { AssetDto } from '@ledger/shared';
+import { AssetType, ProfitRateType } from '@kevin/shared';
+import type { AssetDto } from '@kevin/shared';
 import { formatBRL } from '../utils/format';
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {

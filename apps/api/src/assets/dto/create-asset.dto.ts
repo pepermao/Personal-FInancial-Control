@@ -1,5 +1,5 @@
 import { IsDateString, IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString } from 'class-validator';
-import { AssetType, ProfitRateType } from '@ledger/shared';
+import { AssetType, ProfitRateType } from '@kevin/shared';
 
 export class CreateAssetDto {
   @IsString()

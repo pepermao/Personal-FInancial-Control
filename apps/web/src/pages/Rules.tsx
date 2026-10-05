@@ -21,7 +21,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { apiClient } from '../api/client';
 import { usePagination } from '../hooks/usePagination';
-import type { CategoryDto } from '@ledger/shared';
+import type { CategoryDto } from '@kevin/shared';
 
 interface RuleRow {
   id: string;

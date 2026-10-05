@@ -1,4 +1,4 @@
-import type { BulkImportResultDto } from '@ledger/shared';
+import type { BulkImportResultDto } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface BulkImportInput {

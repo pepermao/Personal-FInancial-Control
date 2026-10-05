@@ -1,4 +1,4 @@
-import type { CategoryKind, Direction, ReclassifyResultDto, TransactionDto, TransactionNature, TransactionType } from '@ledger/shared';
+import type { CategoryKind, Direction, ReclassifyResultDto, TransactionDto, TransactionNature, TransactionType } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface TransactionWithRelations extends TransactionDto {

@@ -1,4 +1,4 @@
-import type { CashFlowDto, DashboardSummaryDto, NetWorthHistoryDto } from '@ledger/shared';
+import type { CashFlowDto, DashboardSummaryDto, NetWorthHistoryDto } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface DashboardPeriodParams {

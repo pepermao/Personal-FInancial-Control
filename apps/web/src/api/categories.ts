@@ -1,4 +1,4 @@
-import type { CategoryDto, CategoryKind } from '@ledger/shared';
+import type { CategoryDto, CategoryKind } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface CategoryInput {
