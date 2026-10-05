@@ -10,7 +10,8 @@
     "format": "prettier --write \"apps/**/src/**/*.{ts,tsx}\" \"packages/**/src/**/*.ts\"",
     "db:migrate": "pnpm --filter @ledger/api prisma:migrate",
     "db:seed": "pnpm --filter @ledger/api prisma:seed",
-    "db:studio": "pnpm --filter @ledger/api prisma:studio"
+    "db:studio": "pnpm --filter @ledger/api prisma:studio",
+    "mcp": "pnpm --filter @ledger/api mcp"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

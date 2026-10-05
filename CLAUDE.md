@@ -135,6 +135,37 @@ Seven things are easy to get wrong here:
 
 v1 `GET /transactions` returns HTTP 410 for applications created after 2026-06-02, so the client uses `/v2/transactions` cursor pagination exclusively.
 
+### MCP server (`mcp/`)
+
+A **read-only** MCP server over the ledger, spoken on stdio, so any agent conversation can
+query the data. It lives inside `apps/api` rather than its own workspace because it boots the
+Nest *application context* (`NestFactory.createApplicationContext`) and resolves the same
+providers the HTTP API uses — one implementation of the balance and P/L rules, not two. A
+separate package would have to import `AppModule`, making `apps/api` a library of itself.
+
+Run with `pnpm mcp` (needs `pnpm build` first). `.mcp.json` at the repo root registers it for
+Claude Code; `claude mcp add` installs it user-wide.
+
+Ten tools: `get_financial_overview`, `list_accounts`, `aggregate_transactions`,
+`search_transactions`, `get_portfolio_analysis`, `list_investments`, `get_cash_flow`,
+`get_net_worth_history`, `get_benchmarks`, `get_data_quality`.
+
+Three rules shape the design:
+
+- **The server does the arithmetic, never the agent.** `aggregate_transactions` takes a metric
+  and a grouping and returns computed buckets, so a model is never handed rows to add up. A
+  wrong digit in a money figure does not read as an error, so it has to be impossible.
+- **Nothing may write to stdout except JSON-RPC.** A stray log line corrupts the stream and the
+  client drops the connection — hence `logger: false` and `console.error` for diagnostics.
+- **The environment is loaded relative to `__dirname`, not the cwd.** Clients spawn the server
+  from wherever the conversation is, so `apps/api/.env` is resolved from the compiled file's
+  own location.
+
+`BenchmarksService` (`market/`) fetches Selic/CDI/IPCA from the Banco Central SGS API, cached
+6h. Series codes were verified against live responses: **1178** Selic a.a., **4389** CDI a.a.,
+**433** IPCA monthly. Series 11 is the *daily* Selic — using it as an annual figure understates
+the benchmark by two orders of magnitude, so it is deliberately absent.
+
 ### Web (React)
 
 `main.tsx` wires QueryClientProvider + MUI ThemeProvider + BrowserRouter. `App.tsx` defines routes under a single `Layout`: `/dashboard`, `/transactions`, `/accounts`, `/assets`, `/categories`, `/rules`, `/imports`, `/settings`. There is deliberately no real-estate route — `AssetType` tracks investments only, and `Asset` means a market position. All API calls go through `src/api/client.ts` (axios, baseURL from `VITE_API_URL`). Data fetching uses `@tanstack/react-query`. UI is in Portuguese (pt-BR) — match existing copy when adding strings.
