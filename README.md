@@ -86,6 +86,33 @@ applies classification rules in priority order, and returns:
 { "imported": 42, "duplicated": 3, "needsReview": 5 }
 ```
 
+## Open Finance sync (Pluggy)
+
+`POST /open-finance/sync` pulls balances, transactions and investments from the banks connected
+in [Meu Pluggy](https://meu.pluggy.ai) and lands them in the same tables as CSV imports — same
+fingerprint dedupe, same classification rules.
+
+```bash
+# apps/api/.env
+PLUGGY_CLIENT_ID="..."        # dashboard.pluggy.ai -> your application
+PLUGGY_CLIENT_SECRET="..."
+```
+
+Banks are connected from **Configurações → Open Finance** in the app: the Connect widget opens,
+you authorise, and the connection is stored in `pluggy_connections`. No item IDs in config —
+Pluggy's item *listing* endpoint is a paid-plan feature, so each item is captured at the moment
+it is authorised. When a consent expires, "Reconectar" reopens the widget in update mode and the
+existing history is kept.
+
+```json
+{ "itemIds": ["..."], "totalImported": 128, "investmentsUpserted": 6,
+  "accounts": [{ "accountName": "Conta Corrente", "imported": 128, "duplicated": 0,
+                 "needsReview": 4, "pending": 2, "balance": "8500.00" }] }
+```
+
+Each sync writes an `ImportBatch` whose `endBalance` is the balance Pluggy reports, which anchors
+the account to bank truth — necessary because Open Finance only exposes 12 months of history.
+
 ## API overview
 
 | Module | Endpoints |
@@ -98,6 +125,7 @@ applies classification rules in priority order, and returns:
 | Transactions | `GET/POST/PATCH/DELETE /transactions` (filterable by account, category, month, direction) |
 | Assets | `GET/POST/PATCH/DELETE /assets` |
 | Imports | `POST /imports/csv` |
+| Open Finance | `GET/POST/DELETE /open-finance/connections`, `POST /open-finance/connect-token`, `POST /open-finance/sync`, `GET /open-finance/status` |
 | Dashboard | `GET /dashboard/summary?month=YYYY-MM` |
 
 ## Frontend routes

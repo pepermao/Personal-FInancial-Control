@@ -6,7 +6,6 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -33,7 +32,6 @@ const NAV_ITEMS = [
   { label: 'Contas', to: '/accounts', icon: <AccountBalanceOutlined /> },
   { label: 'Ativos', to: '/assets', icon: <SavingsOutlined /> },
   { label: 'Investimentos', to: '/investments', icon: <TrendingUpOutlined /> },
-  { label: 'Imóveis', to: '/real-estate', icon: <ApartmentOutlined /> },
   { label: 'Categorias', to: '/categories', icon: <CategoryOutlined /> },
   { label: 'Regras', to: '/rules', icon: <RuleOutlined /> },
   { label: 'Importações', to: '/imports', icon: <UploadFileOutlined /> },
@@ -120,19 +118,9 @@ export function Layout() {
 
         <Stack
           direction="row"
-          alignItems="center"
-          spacing={1.25}
-          sx={{ px: 1, py: 1, borderTop: `1px solid ${theme.palette.divider}`, mt: 1, pt: 2 }}
+          justifyContent="flex-end"
+          sx={{ px: 1, py: 1, borderTop: `1px solid ${theme.palette.divider}`, mt: 1, pt: 1.5 }}
         >
-          <Avatar src="/kevin.jpg" alt="Kevin Malone" sx={{ width: 32, height: 32 }}>
-            KM
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>Kevin Malone</Typography>
-            <Typography sx={{ fontSize: 11.5, color: theme.palette.text.secondary, lineHeight: 1.3 }}>
-              Contador
-            </Typography>
-          </Box>
           <Tooltip title={isDark ? 'Modo claro' : 'Modo escuro'}>
             <IconButton size="small" onClick={toggleMode} sx={{ color: idleFg }}>
               {isDark ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}

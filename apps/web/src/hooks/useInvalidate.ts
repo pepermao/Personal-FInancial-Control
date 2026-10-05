@@ -16,6 +16,10 @@ export function useInvalidate() {
   const banks = () => qc.invalidateQueries({ queryKey: qk.banks.all() });
   const assets = () => qc.invalidateQueries({ queryKey: qk.assets.all() });
   const rules = () => qc.invalidateQueries({ queryKey: qk.rules.all() });
+  const openFinance = () => {
+    qc.invalidateQueries({ queryKey: qk.openFinance.connections() });
+    qc.invalidateQueries({ queryKey: qk.openFinance.status() });
+  };
   const dashboard = () => {
     qc.invalidateQueries({ queryKey: ['dashboard-summary'] });
     qc.invalidateQueries({ queryKey: ['dashboard-cash-flow'] });
@@ -29,8 +33,9 @@ export function useInvalidate() {
     accounts();
     assets();
     rules();
+    openFinance();
     dashboard();
   };
 
-  return { transactions, categories, accounts, banks, assets, rules, dashboard, all };
+  return { transactions, categories, accounts, banks, assets, rules, openFinance, dashboard, all };
 }

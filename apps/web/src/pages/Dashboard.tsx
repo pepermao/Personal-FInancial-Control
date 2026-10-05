@@ -15,6 +15,7 @@ import { dashboardApi, periodKey, qk } from '../api';
 import { PeriodPicker, type PeriodType, monthStringToDate } from '../components/PeriodPicker';
 import { formatBRL } from '../utils/format';
 import { KpiCard } from '../components/KpiCard';
+import { OverviewCards } from './dashboard/OverviewCards';
 
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -100,27 +101,19 @@ export function DashboardPage() {
 
       {data && (
         <>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Patrimônio líquido" value={formatBRL(data.netWorth)} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Total em contas" value={formatBRL(data.totalAccountsBalance)} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+          <OverviewCards data={data} />
+
+          {/* Position lives in the cards above; these stay because they describe the period,
+              which no card covers. */}
+          <Grid container spacing={2} sx={{ mt: 0 }}>
+            <Grid item xs={12} sm={4}>
               <KpiCard label="Renda no período" value={formatBRL(data.totalIncome)} />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={4}>
               <KpiCard label="Custo de vida" value={formatBRL(data.totalExpense)} />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={4}>
               <KpiCard label="Fluxo de caixa" value={formatBRL(data.balance)} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Investimentos" value={formatBRL(data.totalInvestments)} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard label="Imóveis" value={formatBRL(data.totalRealEstate)} />
             </Grid>
           </Grid>
 

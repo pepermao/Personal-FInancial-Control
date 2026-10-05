@@ -67,6 +67,8 @@ For React component tests, add `@testing-library/react` + `@testing-library/jest
 
 `apps/api/.env` must define `DATABASE_URL`. Copy from `apps/api/.env.example`. Optional: `PORT` (default 3001), `WEB_ORIGIN` (CORS, default `http://localhost:5173`). Web reads `VITE_API_URL` (default `http://localhost:3001`).
 
+Open Finance sync needs `PLUGGY_CLIENT_ID` and `PLUGGY_CLIENT_SECRET`. Item IDs are **not** configured: they are captured by the Connect widget and stored in `pluggy_connections`. `PLUGGY_ITEM_IDS` still works as a fallback when that table is empty, for installs that predate the widget. Without credentials `GET /open-finance/status` reports `configured: false` and sync refuses to run — nothing else is affected.
+
 ## Architecture
 
 Monorepo with three workspaces: `apps/api` (NestJS), `apps/web` (React+Vite+MUI), `packages/shared` (TS enums + DTOs shared by both).
@@ -101,17 +103,57 @@ Critical `Transaction` fields:
 
 Rule matching (in imports and in `POST /transactions/reclassify`) uses `descriptionNormalized.includes(normalizeDescription(rule.pattern))` — patterns are case- and accent-insensitive substrings, not regex. Both sides must go through `normalizeDescription` (NFD-strip + uppercase); comparing a raw/uppercased-only pattern against an accent-stripped description silently matches nothing.
 
+### Open Finance sync (`open-finance/`)
+
+Pluggy is a **second importer**, not a second data model — it reuses `Account`, `Transaction`, `ImportBatch` and the classification rules.
+
+**Connections** (`pluggy-connections.service.ts`) own the item lifecycle, kept apart from sync because a connection is established once and read many times. The flow mirrors how Pluggy intends it:
+
+1. `POST /open-finance/connect-token` mints a 30-minute token.
+2. The browser opens Pluggy's widget (`react-pluggy-connect`) with it; the user picks a connector and authorises.
+3. `onSuccess` returns the **Item ID** — `POST /open-finance/connections` reads `/items/{id}` for the connector name and persists a `PluggyConnection`.
+
+This exists because **`GET /items` is a paid-plan feature**: an item can only be learned at the moment it is authorised, so it has to be captured then and stored. `POST /open-finance/connections/:id/reconnect-token` reopens the widget in update mode, which is how a consent that hit its 12-month ceiling is renewed without losing the item and the history keyed to it.
+
+`POST /open-finance/sync` then walks each registered item:
+
+1. `GET /accounts?itemId=` → link each Pluggy account to a Kevin account by `pluggyAccountId`. First sync creates the bank and account, or adopts an existing `bank+name` match **that is not already linked to another Pluggy account**, so CSV history stays on one timeline.
+2. Open one `ImportBatch` per account with `endBalance` set to Pluggy's reported balance. That makes the batch a **bank-truth anchor** (see `accounts.service.ts`), which is what keeps balances correct even though Open Finance only exposes 12 months of history. A batch with **zero** transactions still anchors — it falls back to the batch's `createdAt`, because an account with no movement in the window still reports a real balance.
+3. `GET /v2/transactions` by cursor → skip `PENDING` rows → dedupe on `pluggyTransactionId` → apply rules → insert.
+4. `GET /investments?itemId=` → upsert `Asset` by `pluggyInvestmentId`, including `issuer` and `dueDate`.
+
+Seven things are easy to get wrong here:
+
+- **Direction comes from Pluggy's `type`, never the sign of `amount`.** Credit cards report a purchase as positive; bank accounts report an outflow as negative. `type` is DEBIT/CREDIT on both. See `mapDirection`.
+- **`PENDING` transactions are skipped.** Their amount and description can still change, and Pluggy's own docs warn that transaction IDs change when core attributes shift — importing them would produce a second fingerprint once they post.
+- **`GET /items` listing is a paid-plan feature**, though `GET /items/{id}` is not. Items cannot be enumerated, only captured at authorisation time — hence the `pluggy_connections` table.
+- **Dedupe is by `pluggyTransactionId`, never by fingerprint.** `accountId|date|amount|description` cannot distinguish genuinely repeated purchases — three coffees at the same shop on the same day at the same price share one fingerprint but are three real transactions. The Pluggy id is folded into the fingerprint only to satisfy its unique constraint, which means a Pluggy row will not dedupe against a CSV row for the same purchase: feed any one account from a single importer, not both.
+- **`pageSize` is a v1 parameter.** `/v2/transactions` rejects it with HTTP 400; the cursor endpoint sets its own page size.
+- **A MeuPluggy item is frozen at creation.** `PATCH /items/{id}` answers `400 MeuPluggy item cant be updated`, and the item only ever exposes the Meu Pluggy connections that existed when it was made. Linking a new bank at meu.pluggy.ai therefore needs a **new item** through the widget — one item per connection, not one per account.
+- **Bank names come from the COMPE code, resolved once per item.** `connector.name` is always "MeuPluggy" on a proxied item, and the account's own `marketingName` is a product ("croma-platinum", "… (Conta Pré-paga)"), so neither names an institution. `institutionFor()` takes the first known COMPE in the item via `pluggy-institutions.ts`; every account in that item shares it, which is what files a credit card — it carries no COMPE — under its own bank. Sync repoints accounts whose bank was resolved differently before, then prunes banks left empty.
+- **Two accounts can share a name and a number.** XP reports `name: "XP"`, `number: "01946356-6"` for both Banco XP (COMPE 348) and XP Investimentos (COMPE 102). `resolveAccount` adopts an existing `bank+name` row **only when it has no `pluggyAccountId`**; otherwise it disambiguates with the COMPE code from `bankData.transferNumber` (see `compeFromTransferNumber`). Adopting unconditionally made one Kevin account flip between two Pluggy accounts on every sync.
+
+v1 `GET /transactions` returns HTTP 410 for applications created after 2026-06-02, so the client uses `/v2/transactions` cursor pagination exclusively.
+
 ### Web (React)
 
-`main.tsx` wires QueryClientProvider + MUI ThemeProvider + BrowserRouter. `App.tsx` defines routes under a single `Layout`: `/dashboard`, `/transactions`, `/accounts`, `/assets`, `/categories`, `/rules`, `/imports`, `/settings`. All API calls go through `src/api/client.ts` (axios, baseURL from `VITE_API_URL`). Data fetching uses `@tanstack/react-query`. UI is in Portuguese (pt-BR) — match existing copy when adding strings.
+`main.tsx` wires QueryClientProvider + MUI ThemeProvider + BrowserRouter. `App.tsx` defines routes under a single `Layout`: `/dashboard`, `/transactions`, `/accounts`, `/assets`, `/categories`, `/rules`, `/imports`, `/settings`. There is deliberately no real-estate route — `AssetType` tracks investments only, and `Asset` means a market position. All API calls go through `src/api/client.ts` (axios, baseURL from `VITE_API_URL`). Data fetching uses `@tanstack/react-query`. UI is in Portuguese (pt-BR) — match existing copy when adding strings.
 
 ### Endpoints
 
 Standard REST CRUD for each resource module. Notable non-CRUD:
 - `POST /imports/csv` — multipart, field `file`, body `accountId` (+ optional `initialBalance`, `endBalance`). Returns `{ imported, duplicated, needsReview, historical }`.
 - `POST /imports/csv/bulk` — multipart, field `files` (up to 50), body `accountId` (+ optional `initialBalance`/`endBalance` **only** when a single file is uploaded). Returns `{ results: [...] }` per file.
-- `GET /dashboard/summary?month=YYYY-MM` — aggregates by category + account, computes `netWorth = totalAccountsBalance + totalAssetsValue`.
+- `GET /dashboard/summary?month=YYYY-MM` — aggregates by category + account, computes `netWorth = totalAccountsBalance + totalAssetsValue`. Also returns the Overview shape: `totalBankBalance` / `totalCreditCardDebt` (cash and liabilities reported apart, never netted), `banks[]` grouped per institution with `sharePct`, `creditCards[]` with limit/available/`usedPct`/`dueDate`, and `investmentClasses[]` (Renda Fixa / Ações / Outros, see `common/asset-class.ts`).
 - `GET /transactions` supports filters: account, category, month (competenceMonth), direction.
+- `POST /open-finance/sync` — body `{ days?, itemIds? }`. Pulls Pluggy data into the ledger. Returns per-account `{ imported, duplicated, needsReview, pending, balance }`.
+- `GET /open-finance/status` — `{ configured, connectionCount, itemCount }`. Never echoes credentials.
+- `GET /open-finance/connections` — registered bank connections.
+- `POST /open-finance/connect-token` — `{ accessToken }` for the Connect widget.
+- `POST /open-finance/connections` — body `{ itemId }`. Persists what the widget returned.
+- `POST /open-finance/connections/:id/reconnect-token` — widget token in update mode.
+- `POST /open-finance/connections/:id/refresh` — re-reads the item status from Pluggy.
+- `DELETE /open-finance/connections/:id` — forgets the connection; imported data is kept.
 
 ## Conventions
 
@@ -227,4 +269,4 @@ Pages > 500 LOC get split into sibling component files under the same folder (or
 ### Not established yet (safe to introduce)
 
 - Uniform backend error shape (`ApiErrorDto`) — currently NestJS defaults leak through.
-- Per-page conventions differ between older pages (Accounts, Rules, Investments, RealEstate — still use inline `apiClient` + native `confirm()`) and migrated ones (Transactions, Categories, Dashboard, Imports). New work should follow the migrated shape; sweep old pages when touched.
+- Per-page conventions differ between older pages (Accounts, Rules, Investments — still use inline `apiClient` + native `confirm()`) and migrated ones (Transactions, Categories, Dashboard, Imports, Settings). New work should follow the migrated shape; sweep old pages when touched.

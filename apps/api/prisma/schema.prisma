@@ -42,7 +42,6 @@ enum AssetType {
   POUPANCA
   ACOES
   FII
-  REAL_ESTATE
   OTHER
 }
 
@@ -90,6 +89,11 @@ model Account {
   accountNumber  String?
   initialBalance Decimal       @default(0) @db.Decimal(14, 2)
   notes          String?
+  pluggyAccountId String?      @unique
+  pluggyItemId    String?
+  creditLimit     Decimal?     @db.Decimal(14, 2)
+  availableCreditLimit Decimal? @db.Decimal(14, 2)
+  creditDueDate   DateTime?
   transactions   Transaction[]
   importBatches  ImportBatch[]
   createdAt      DateTime      @default(now())
@@ -143,11 +147,14 @@ model Transaction {
   categoryId              String?
   category                Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   subcategory             String?
+  assetId                 String?
+  asset                   Asset?            @relation(fields: [assetId], references: [id], onDelete: SetNull)
   nature                  TransactionNature @default(EXPENSE)
   impactsDashboardIncome  Boolean           @default(true)
   impactsDashboardExpense Boolean           @default(true)
   impactsAccountBalance   Boolean           @default(true)
   fingerprint             String            @unique
+  pluggyTransactionId     String?           @unique
   importBatchId           String?
   importBatch             ImportBatch?      @relation(fields: [importBatchId], references: [id])
   notes                   String?
@@ -156,7 +163,9 @@ model Transaction {
 
   @@index([accountId])
   @@index([categoryId])
+  @@index([assetId])
   @@index([competenceMonth])
+  @@index([nature])
   @@map("transactions")
 }
 
@@ -169,6 +178,10 @@ model Asset {
   profitRate     Decimal?       @db.Decimal(6, 2)
   date           DateTime       @default(now())
   notes          String?
+  pluggyInvestmentId String?    @unique
+  issuer         String?
+  dueDate        DateTime?
+  transactions   Transaction[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -189,4 +202,22 @@ model ImportBatch {
   createdAt     DateTime      @default(now())
 
   @@map("import_batches")
+}
+
+/// A bank connection created through the Pluggy Connect widget.
+///
+/// Item IDs live here rather than in the environment because Pluggy's item *listing*
+/// endpoint is a paid-plan feature: an item can only be learned at the moment the user
+/// authorises it in the widget, so it has to be persisted right then.
+model PluggyConnection {
+  id            String    @id @default(uuid())
+  itemId        String    @unique
+  connectorName String
+  connectorId   Int?
+  status        String    @default("UNKNOWN")
+  lastSyncAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("pluggy_connections")
 }

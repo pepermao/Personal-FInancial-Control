@@ -166,8 +166,10 @@ export class ImportsService {
           subcategory: match?.subcategory,
           fingerprint,
           importBatchId: batch.id,
-          impactsDashboardIncome: true,
-          impactsDashboardExpense: true,
+          // Historical statements (older than current data) don't affect any live totals —
+          // dashboard KPIs stay stable when re-importing archived CSVs.
+          impactsDashboardIncome: !historical,
+          impactsDashboardExpense: !historical,
           impactsAccountBalance: !historical,
         },
       });

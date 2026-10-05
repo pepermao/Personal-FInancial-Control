@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { AssetType, Direction } from '@ledger/shared';
+import { AccountType } from '@ledger/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { AssetsService } from '../assets/assets.service';
 import { impactOf } from '../common/category-kind';
+import { countsAsPnl } from '../common/pnl';
+import { assetClassOf } from '../common/asset-class';
 
 function endOfMonth(yyyyMm: string): Date {
   const [y, m] = yyyyMm.split('-').map(Number);
@@ -54,16 +56,21 @@ export class DashboardService {
     });
 
     let totalIncome = 0;
-    let totalExpense = 0;
+    let grossExpense = 0;
+    let reimbursements = 0;
     const byCategoryMap = new Map<string, { categoryId: string | null; categoryName: string; total: number }>();
 
     for (const tx of transactions) {
+      // Transfers between own accounts and investment applications/redemptions are not
+      // income or expense — see `countsAsPnl`.
+      if (!countsAsPnl(tx.nature, tx.category?.kind)) continue;
+
       const amount = Number(tx.amount);
       const impact = impactOf(tx.category?.kind, tx.direction);
 
       if (impact.addsToIncome && tx.impactsDashboardIncome) totalIncome += amount;
-      if (impact.addsToExpense && tx.impactsDashboardExpense) totalExpense += amount;
-      if (impact.subtractsFromExpense && tx.impactsDashboardExpense) totalExpense -= amount;
+      if (impact.addsToExpense && tx.impactsDashboardExpense) grossExpense += amount;
+      if (impact.subtractsFromExpense && tx.impactsDashboardExpense) reimbursements += amount;
 
       if (impact.addsToExpense && tx.impactsDashboardExpense) {
         const key = tx.categoryId ?? 'uncategorized';
@@ -77,17 +84,16 @@ export class DashboardService {
         byCategoryMap.set(key, entry);
       }
     }
-    if (totalExpense < 0) totalExpense = 0;
+    // Net expense can legitimately be negative (reimbursements > spending). Surface it faithfully.
+    const totalExpense = grossExpense - reimbursements;
 
     const cutoff = periodType === 'month'
       ? endOfMonth(responseMonth!)
       : endOfYear(responseYear);
 
-    // Accounts are scoped by tx date up to period end. Assets stay as latest known snapshot
-    // (personal finance apps treat them as a current position, not a per-period timeline).
-    const [accounts, assets] = await Promise.all([
+    const [accounts, explicitAssets] = await Promise.all([
       this.accountsService.findAll(cutoff),
-      this.assetsService.findAll(),
+      this.assetsService.findAll(cutoff),
     ]);
 
     const byAccount = accounts.map((account) => ({
@@ -97,13 +103,79 @@ export class DashboardService {
       balance: account.currentBalance,
     }));
     const totalAccountsBalance = accounts.reduce((sum, a) => sum + Number(a.currentBalance), 0);
-    const totalInvestments = assets
-      .filter((a) => a.type !== AssetType.REAL_ESTATE)
-      .reduce((sum, a) => sum + Number(a.value), 0);
-    const totalRealEstate = assets
-      .filter((a) => a.type === AssetType.REAL_ESTATE)
-      .reduce((sum, a) => sum + Number(a.value), 0);
-    const totalAssetsValue = totalInvestments + totalRealEstate;
+
+    // Cash and card debt are reported apart. Netting them hides both: a card is a liability,
+    // not a smaller bank balance, and its limit is only legible next to what is owed.
+    const cardAccounts = accounts.filter((a) => a.type === AccountType.CREDIT_CARD);
+    const cashAccounts = accounts.filter((a) => a.type !== AccountType.CREDIT_CARD);
+
+    const totalBankBalance = cashAccounts.reduce((sum, a) => sum + Number(a.currentBalance), 0);
+    const totalCreditCardDebt = cardAccounts.reduce(
+      (sum, a) => sum + Math.abs(Number(a.currentBalance)),
+      0,
+    );
+
+    const bankMap = new Map<string, { bankId: string; bankName: string; balance: number; accountCount: number }>();
+    for (const account of cashAccounts) {
+      const entry = bankMap.get(account.bankId) ?? {
+        bankId: account.bankId,
+        bankName: account.bank.name,
+        balance: 0,
+        accountCount: 0,
+      };
+      entry.balance += Number(account.currentBalance);
+      entry.accountCount += 1;
+      bankMap.set(account.bankId, entry);
+    }
+    const banks = Array.from(bankMap.values())
+      .sort((a, b) => b.balance - a.balance)
+      .map((entry) => ({
+        ...entry,
+        balance: entry.balance.toFixed(2),
+        sharePct: totalBankBalance ? Number(((entry.balance / totalBankBalance) * 100).toFixed(1)) : 0,
+      }));
+
+    const creditCards = cardAccounts
+      .map((account) => {
+        const used = Math.abs(Number(account.currentBalance));
+        const limit = account.creditLimit === null ? null : Number(account.creditLimit);
+        return {
+          accountId: account.id,
+          accountName: account.name,
+          accountNumber: account.accountNumber,
+          used: used.toFixed(2),
+          limit: limit === null ? null : limit.toFixed(2),
+          available:
+            account.availableCreditLimit === null
+              ? null
+              : Number(account.availableCreditLimit).toFixed(2),
+          usedPct: limit ? Number(((used / limit) * 100).toFixed(1)) : null,
+          dueDate: account.creditDueDate ? account.creditDueDate.toISOString() : null,
+        };
+      })
+      .sort((a, b) => Number(b.used) - Number(a.used));
+    // Investment positions come only from recorded Assets, never inferred from transactions.
+    //
+    // Inferring them made sense when statements were the only source and positions were
+    // unknown. Open Finance reports real positions, so inferring on top counts the same
+    // money twice: once as the transfer into the position, once as the position itself.
+    const totalInvestments = explicitAssets.reduce((sum, a) => sum + Number(a.value), 0);
+
+    const classMap = new Map<string, { className: string; value: number; count: number }>();
+    for (const asset of explicitAssets) {
+      const className = assetClassOf(asset.type);
+      const entry = classMap.get(className) ?? { className, value: 0, count: 0 };
+      entry.value += Number(asset.value);
+      entry.count += 1;
+      classMap.set(className, entry);
+    }
+    const investmentClasses = Array.from(classMap.values())
+      .sort((a, b) => b.value - a.value)
+      .map((entry) => ({
+        ...entry,
+        value: entry.value.toFixed(2),
+        sharePct: totalInvestments ? Number(((entry.value / totalInvestments) * 100).toFixed(1)) : 0,
+      }));
 
     return {
       periodType,
@@ -113,25 +185,38 @@ export class DashboardService {
       latestMonth,
       totalIncome: totalIncome.toFixed(2),
       totalExpense: totalExpense.toFixed(2),
+      grossExpense: grossExpense.toFixed(2),
+      reimbursements: reimbursements.toFixed(2),
       balance: (totalIncome - totalExpense).toFixed(2),
       byCategory: Array.from(byCategoryMap.values())
         .sort((a, b) => b.total - a.total)
         .map((entry) => ({ ...entry, total: entry.total.toFixed(2) })),
       byAccount: byAccount.sort((a, b) => Number(b.balance) - Number(a.balance)),
       totalAccountsBalance: totalAccountsBalance.toFixed(2),
+      totalBankBalance: totalBankBalance.toFixed(2),
+      totalCreditCardDebt: totalCreditCardDebt.toFixed(2),
+      banks,
+      creditCards,
+      investmentClasses,
       totalInvestments: totalInvestments.toFixed(2),
-      totalRealEstate: totalRealEstate.toFixed(2),
-      totalAssetsValue: totalAssetsValue.toFixed(2),
-      netWorth: (totalAccountsBalance + totalAssetsValue).toFixed(2),
+      netWorth: (totalAccountsBalance + totalInvestments).toFixed(2),
     };
   }
 
-  /** Monthly buckets (Jan-Dec) for a year, or daily buckets (1-31) for a specific month. Kind-aware. */
+    /** Monthly buckets (Jan-Dec) for a year, or daily buckets (1-31) for a specific month. Kind-aware. */
   async cashFlow(month?: string, year?: string) {
     const applyImpact = (
       entry: { income: number; expense: number },
-      tx: { amount: unknown; direction: string; impactsDashboardIncome: boolean; impactsDashboardExpense: boolean; category: { kind: string } | null },
+      tx: {
+        amount: unknown;
+        direction: string;
+        nature: string;
+        impactsDashboardIncome: boolean;
+        impactsDashboardExpense: boolean;
+        category: { kind: string } | null;
+      },
     ) => {
+      if (!countsAsPnl(tx.nature, tx.category?.kind)) return;
       const amount = Number(tx.amount);
       const impact = impactOf(tx.category?.kind, tx.direction);
       if (impact.addsToIncome && tx.impactsDashboardIncome) entry.income += amount;
@@ -144,7 +229,15 @@ export class DashboardService {
       const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
       const transactions = await this.prisma.transaction.findMany({
         where: { competenceMonth: month },
-        include: { category: { select: { kind: true } } },
+        select: {
+          amount: true,
+          direction: true,
+          nature: true,
+          date: true,
+          impactsDashboardIncome: true,
+          impactsDashboardExpense: true,
+          category: { select: { kind: true } },
+        },
       });
 
       const buckets = new Map<number, { income: number; expense: number }>();
@@ -160,8 +253,8 @@ export class DashboardService {
         granularity: 'day' as const,
         series: Array.from(buckets.entries()).map(([day, v]) => ({
           label: String(day).padStart(2, '0'),
-          income: Math.max(0, v.income).toFixed(2),
-          expense: Math.max(0, v.expense).toFixed(2),
+          income: v.income.toFixed(2),
+          expense: v.expense.toFixed(2),
         })),
       };
     }
@@ -170,7 +263,15 @@ export class DashboardService {
     const responseYear = year ?? bounds._max.competenceMonth?.slice(0, 4) ?? new Date().getFullYear().toString();
     const transactions = await this.prisma.transaction.findMany({
       where: { competenceMonth: { startsWith: `${responseYear}-` } },
-      include: { category: { select: { kind: true } } },
+      select: {
+        amount: true,
+        direction: true,
+        nature: true,
+        competenceMonth: true,
+        impactsDashboardIncome: true,
+        impactsDashboardExpense: true,
+        category: { select: { kind: true } },
+      },
     });
 
     const buckets = new Map<string, { income: number; expense: number }>();
@@ -186,26 +287,14 @@ export class DashboardService {
       granularity: 'month' as const,
       series: Array.from(buckets.entries()).map(([monthKey, v]) => ({
         label: monthKey,
-        income: Math.max(0, v.income).toFixed(2),
-        expense: Math.max(0, v.expense).toFixed(2),
+        income: v.income.toFixed(2),
+        expense: v.expense.toFixed(2),
       })),
     };
   }
 
   /** Net worth at the end of each of the trailing 12 months, ending at the current real-world month. */
   async netWorthHistory() {
-    const [accounts, transactions, assets] = await Promise.all([
-      this.prisma.account.findMany({ select: { initialBalance: true } }),
-      this.prisma.transaction.findMany({
-        where: { impactsAccountBalance: true },
-        select: { date: true, amount: true, direction: true },
-        orderBy: { date: 'asc' },
-      }),
-      this.prisma.asset.findMany({ select: { date: true, value: true } }),
-    ]);
-
-    const initialBalanceSum = accounts.reduce((sum, a) => sum + Number(a.initialBalance), 0);
-
     const now = new Date();
     const months: string[] = [];
     for (let i = 11; i >= 0; i--) {
@@ -213,25 +302,22 @@ export class DashboardService {
       months.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
     }
 
-    const series = months.map((month) => {
-      const [y, m] = month.split('-').map(Number);
-      const endOfMonth = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
-
-      const txSum = transactions
-        .filter((tx) => tx.date <= endOfMonth)
-        .reduce(
-          (sum, tx) => sum + (tx.direction === Direction.INCOME ? Number(tx.amount) : -Number(tx.amount)),
-          0,
-        );
-      const assetsSum = assets
-        .filter((asset) => asset.date <= endOfMonth)
-        .reduce((sum, asset) => sum + Number(asset.value), 0);
-
-      return {
-        label: month,
-        netWorth: (initialBalanceSum + txSum + assetsSum).toFixed(2),
-      };
-    });
+    const series = await Promise.all(
+      months.map(async (month) => {
+        const [y, m] = month.split('-').map(Number);
+        const cutoff = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
+        const [accounts, assets] = await Promise.all([
+          this.accountsService.findAll(cutoff),
+          this.assetsService.findAll(cutoff),
+        ]);
+        const accountsSum = accounts.reduce((sum, a) => sum + Number(a.currentBalance), 0);
+        const assetsSum = assets.reduce((sum, a) => sum + Number(a.value), 0);
+        return {
+          label: month,
+          netWorth: (accountsSum + assetsSum).toFixed(2),
+        };
+      }),
+    );
 
     return { series };
   }

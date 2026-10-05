@@ -20,7 +20,6 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   [AssetType.POUPANCA]: 'Poupança',
   [AssetType.ACOES]: 'Ações',
   [AssetType.FII]: 'FII',
-  [AssetType.REAL_ESTATE]: 'Imóvel',
   [AssetType.OTHER]: 'Outro',
 };
 
@@ -34,7 +33,6 @@ export const ASSET_TYPE_COLORS: Record<AssetType, { bg: string; color: string }>
   [AssetType.POUPANCA]: { bg: '#EEF1F3', color: '#3B4E5C' },
   [AssetType.ACOES]: { bg: '#EEF1F3', color: '#3B4E5C' },
   [AssetType.FII]: { bg: '#EEF1F3', color: '#3B4E5C' },
-  [AssetType.REAL_ESTATE]: { bg: '#F1F3F5', color: '#55636E' },
   [AssetType.OTHER]: { bg: '#F1F3F5', color: '#55636E' },
 };
 
@@ -47,14 +45,10 @@ export const PROFIT_RATE_TYPE_LABELS: Record<ProfitRateType, string> = {
   [ProfitRateType.NONE]: 'Sem rentabilidade',
 };
 
-// Real estate and generic "other" don't carry a quoted market rate.
-export const TYPES_WITHOUT_RATE = new Set<AssetType>([AssetType.REAL_ESTATE, AssetType.OTHER]);
+// A generic "other" holding carries no quoted market rate.
+export const TYPES_WITHOUT_RATE = new Set<AssetType>([AssetType.OTHER]);
 
-export const INVESTMENT_TYPES = Object.values(AssetType).filter((type) => type !== AssetType.REAL_ESTATE);
-
-export function isRealEstate(asset: AssetDto) {
-  return asset.type === AssetType.REAL_ESTATE;
-}
+export const INVESTMENT_TYPES = Object.values(AssetType);
 
 export function sumValue(assets: AssetDto[]) {
   return assets.reduce((sum, asset) => sum + Number(asset.value), 0);

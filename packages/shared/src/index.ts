@@ -33,7 +33,6 @@ export enum AssetType {
   POUPANCA = 'POUPANCA',
   ACOES = 'ACOES',
   FII = 'FII',
-  REAL_ESTATE = 'REAL_ESTATE',
   OTHER = 'OTHER',
 }
 
@@ -116,6 +115,7 @@ export interface TransactionDto {
   counterparty: string | null;
   categoryId: string | null;
   subcategory: string | null;
+  assetId: string | null;
   nature: TransactionNature;
   impactsDashboardIncome: boolean;
   impactsDashboardExpense: boolean;
@@ -187,14 +187,45 @@ export interface DashboardSummaryDto {
   earliestMonth: string | null;
   latestMonth: string | null;
   totalIncome: string;
+  /** Net expense = grossExpense - reimbursements. Can be negative if reimbursements exceed spending. */
   totalExpense: string;
+  grossExpense: string;
+  reimbursements: string;
   balance: string;
   byCategory: Array<{ categoryId: string | null; categoryName: string; total: string }>;
   byAccount: Array<{ accountId: string; accountName: string; bankName: string; balance: string }>;
+  /** Every account netted together, credit-card debt included. Kept for callers that want one figure. */
   totalAccountsBalance: string;
+  /** Cash only — credit cards excluded, because a card is a liability rather than a smaller balance. */
+  totalBankBalance: string;
+  /** Positive amount owed across credit cards. */
+  totalCreditCardDebt: string;
+  banks: Array<{
+    bankId: string;
+    bankName: string;
+    balance: string;
+    accountCount: number;
+    sharePct: number;
+  }>;
+  creditCards: Array<{
+    accountId: string;
+    accountName: string;
+    accountNumber: string | null;
+    used: string;
+    /** Null when the institution does not report a limit. */
+    limit: string | null;
+    available: string | null;
+    usedPct: number | null;
+    dueDate: string | null;
+  }>;
+  investmentClasses: Array<{
+    className: string;
+    value: string;
+    count: number;
+    sharePct: number;
+  }>;
+  /** Recorded Asset positions, excluding real estate. Never inferred from transactions. */
   totalInvestments: string;
-  totalRealEstate: string;
-  totalAssetsValue: string;
   netWorth: string;
 }
 
@@ -218,4 +249,23 @@ export interface NetWorthPointDto {
 
 export interface NetWorthHistoryDto {
   series: NetWorthPointDto[];
+}
+
+/** A bank connection established through the Pluggy Connect widget. */
+export interface PluggyConnectionDto {
+  id: string;
+  /** Pluggy's Item ID — the handle every data call is scoped by. */
+  itemId: string;
+  connectorName: string;
+  connectorId: number | null;
+  /** Pluggy item status: UPDATED, UPDATING, LOGIN_ERROR, OUTDATED, WAITING_USER_INPUT. */
+  status: string;
+  lastSyncAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Short-lived token (30 min) that authorises the Pluggy Connect widget in the browser. */
+export interface ConnectTokenDto {
+  accessToken: string;
 }

@@ -8,6 +8,7 @@ import { ClassificationRulesModule } from './classification-rules/classification
 import { TransactionsModule } from './transactions/transactions.module';
 import { AssetsModule } from './assets/assets.module';
 import { ImportsModule } from './imports/imports.module';
+import { OpenFinanceModule } from './open-finance/open-finance.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     TransactionsModule,
     AssetsModule,
     ImportsModule,
+    OpenFinanceModule,
     DashboardModule,
   ],
 })

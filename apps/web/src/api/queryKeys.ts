@@ -24,6 +24,10 @@ export const qk = {
   rules: {
     all: () => ['rules'] as const,
   },
+  openFinance: {
+    connections: () => ['open-finance-connections'] as const,
+    status: () => ['open-finance-status'] as const,
+  },
   dashboard: {
     /** period is `'year:2026'` or `'month:2026-06'` or `'default'` — stable string for cache. */
     summary: (period: string) => ['dashboard-summary', period] as const,

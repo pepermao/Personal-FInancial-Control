@@ -52,6 +52,10 @@ export class CreateTransactionDto {
   subcategory?: string;
 
   @IsOptional()
+  @IsUUID()
+  assetId?: string;
+
+  @IsOptional()
   @IsEnum(TransactionNature)
   nature?: TransactionNature;
 
