@@ -32,6 +32,8 @@ async function main() {
     'Saúde',
     'Tecnologia',
     'Lazer',
+    'Compras',
+    'Serviços',
     'Doações',
     'Receita PJ',
     'Impostos',

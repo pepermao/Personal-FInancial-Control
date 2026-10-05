@@ -155,6 +155,9 @@ model Transaction {
   impactsAccountBalance   Boolean           @default(true)
   fingerprint             String            @unique
   pluggyTransactionId     String?           @unique
+  /// Pluggy's own category label ("Groceries", "Same person transfer"…) — the fallback
+  /// classifier when no rule matches. Null on CSV rows.
+  pluggyCategory          String?
   importBatchId           String?
   importBatch             ImportBatch?      @relation(fields: [importBatchId], references: [id])
   notes                   String?
