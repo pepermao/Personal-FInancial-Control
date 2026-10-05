@@ -16,3 +16,9 @@ export { importsApi } from './imports';
 export type { BulkImportInput } from './imports';
 export { dashboardApi } from './dashboard';
 export type { DashboardPeriodParams } from './dashboard';
+export { openFinanceApi } from './openFinance';
+export type {
+  OpenFinanceStatusDto,
+  SyncResultDto,
+  SyncAccountResultDto,
+} from './openFinance';

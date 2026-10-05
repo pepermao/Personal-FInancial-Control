@@ -26,7 +26,6 @@ import {
   INVESTMENT_TYPES,
   PROFIT_RATE_TYPE_LABELS,
   TYPES_WITHOUT_RATE,
-  isRealEstate,
   sumValue,
 } from '../lib/assetDisplay';
 
@@ -128,7 +127,7 @@ export function InvestmentsPage() {
   };
 
   const showRateFields = !TYPES_WITHOUT_RATE.has(form.type);
-  const investments = data?.filter((asset) => !isRealEstate(asset)) ?? [];
+  const investments = data ?? [];
 
   return (
     <Box>

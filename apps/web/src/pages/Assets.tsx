@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import { apiClient } from '../api/client';
 import type { AssetDto } from '@ledger/shared';
-import { ASSET_TYPE_LABELS, isRealEstate, sumValue } from '../lib/assetDisplay';
+import { ASSET_TYPE_LABELS, sumValue } from '../lib/assetDisplay';
 import { formatBRL } from '../utils/format';
 import { KpiCard } from '../components/KpiCard';
 
@@ -21,11 +21,8 @@ async function fetchAssets() {
 export function AssetsPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
 
-  const investments = data?.filter((asset) => !isRealEstate(asset)) ?? [];
-  const realEstate = data?.filter(isRealEstate) ?? [];
+  const investments = data ?? [];
   const totalInvestments = sumValue(investments);
-  const totalRealEstate = sumValue(realEstate);
-  const totalAssets = totalInvestments + totalRealEstate;
 
   const byType = new Map<string, number>();
   for (const asset of investments) {
@@ -34,7 +31,7 @@ export function AssetsPage() {
   const allocation = Array.from(byType.entries())
     .map(([type, total]) => ({ type, total, label: ASSET_TYPE_LABELS[type as keyof typeof ASSET_TYPE_LABELS] }))
     .sort((a, b) => b.total - a.total);
-  const maxAllocation = Math.max(1, ...allocation.map((a) => a.total), totalRealEstate);
+  const maxAllocation = Math.max(1, ...allocation.map((a) => a.total));
 
   return (
     <Box>
@@ -49,19 +46,16 @@ export function AssetsPage() {
       {data && (
         <>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6}>
               <KpiCard label="Investimentos" value={formatBRL(totalInvestments)} />
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <KpiCard label="Imóveis" value={formatBRL(totalRealEstate)} />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <KpiCard label="Patrimônio total" value={formatBRL(totalAssets)} />
+            <Grid item xs={12} sm={6}>
+              <KpiCard label="Ativos" value={String(investments.length)} />
             </Grid>
           </Grid>
 
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <Paper sx={{ p: 2.5, height: '100%' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                   <Typography variant="h6" sx={{ fontSize: 16 }}>
@@ -97,29 +91,6 @@ export function AssetsPage() {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 2.5, height: '100%' }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontSize: 16 }}>
-                    Imóveis
-                  </Typography>
-                  <Button component={RouterLink} to="/real-estate" size="small">
-                    Ver todos
-                  </Button>
-                </Stack>
-                <Stack divider={<Box sx={{ borderBottom: 1, borderColor: 'divider' }} />} spacing={1.25}>
-                  {realEstate.map((asset) => (
-                    <Stack key={asset.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.5 }}>
-                      <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{asset.name}</Typography>
-                      <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{formatBRL(asset.value)}</Typography>
-                    </Stack>
-                  ))}
-                  {realEstate.length === 0 && (
-                    <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Nenhum imóvel ainda.</Typography>
-                  )}
-                </Stack>
-              </Paper>
-            </Grid>
           </Grid>
         </>
       )}
