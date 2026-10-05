@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Direction, TransactionNature } from '@kevin/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClassificationRulesService } from '../classification-rules/classification-rules.service';
+import { classify } from '../common/classify';
 import { buildFingerprint, normalizeDescription } from '../common/normalize';
 import {
   compeFromTransferNumber,
@@ -63,6 +64,7 @@ export class OpenFinanceService {
       .slice(0, 10);
 
     const rules = await this.rulesService.findActiveOrderedByPriority();
+    const categoryIdByName = await this.categoryIdByName();
     const accounts: AccountSyncResult[] = [];
     let investmentsUpserted = 0;
 
@@ -76,7 +78,7 @@ export class OpenFinanceService {
       const bankName = this.institutionFor(pluggyAccounts);
 
       for (const pluggyAccount of pluggyAccounts) {
-        accounts.push(await this.syncAccount(itemId, pluggyAccount, bankName, dateFrom, rules));
+        accounts.push(await this.syncAccount(itemId, pluggyAccount, bankName, dateFrom, rules, categoryIdByName));
       }
 
       investmentsUpserted += await this.syncInvestments(itemId);
@@ -99,6 +101,15 @@ export class OpenFinanceService {
    * Falls back to the longest account name, which is the legal entity Pluggy reports — wordy
    * but accurate, and better than naming the bank after a card ("croma-platinum").
    */
+  /** Top-level category name -> id, for resolving Pluggy's labels (see `PLUGGY_CATEGORY_MAP`). */
+  private async categoryIdByName(): Promise<Map<string, string>> {
+    const categories = await this.prisma.category.findMany({
+      where: { parentId: null },
+      select: { id: true, name: true },
+    });
+    return new Map(categories.map((category) => [category.name, category.id]));
+  }
+
   private institutionFor(pluggyAccounts: PluggyAccount[]): string {
     for (const account of pluggyAccounts) {
       const name = institutionNameForCompe(
@@ -120,6 +131,7 @@ export class OpenFinanceService {
     bankName: string,
     dateFrom: string,
     rules: Awaited<ReturnType<ClassificationRulesService['findActiveOrderedByPriority']>>,
+    categoryIdByName: ReadonlyMap<string, string>,
   ): Promise<AccountSyncResult> {
     const account = await this.resolveAccount(itemId, pluggyAccount, bankName);
 
@@ -182,16 +194,21 @@ export class OpenFinanceService {
 
       const existing = await this.prisma.transaction.findFirst({
         where: { pluggyTransactionId: transaction.id },
-        select: { id: true },
+        select: { id: true, pluggyCategory: true },
       });
       if (existing) {
+        // Rows imported before the category was stored get it on their next sync.
+        if (transaction.category && existing.pluggyCategory !== transaction.category) {
+          await this.prisma.transaction.update({
+            where: { id: existing.id },
+            data: { pluggyCategory: transaction.category },
+          });
+        }
         duplicated += 1;
         continue;
       }
 
-      const match = rules.find((rule) =>
-        descriptionNormalized.includes(normalizeDescription(rule.pattern)),
-      );
+      const match = classify(descriptionNormalized, transaction.category, rules, categoryIdByName);
       if (!match) needsReview += 1;
 
       const direction = mapDirection(transaction);
@@ -213,6 +230,7 @@ export class OpenFinanceService {
           subcategory: match?.subcategory,
           fingerprint,
           pluggyTransactionId: transaction.id,
+          pluggyCategory: transaction.category,
           importBatchId: batch.id,
         },
       });

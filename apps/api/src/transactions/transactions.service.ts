@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClassificationRulesService } from '../classification-rules/classification-rules.service';
+import { classify } from '../common/classify';
 import { buildFingerprint, normalizeDescription } from '../common/normalize';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -82,18 +83,34 @@ export class TransactionsService {
   }
 
   /** Re-applies active classification rules to every transaction. Only overwrites when a rule matches. */
+  /**
+   * Re-applies classification to every transaction.
+   *
+   * A rule match always wins and overwrites — that is how editing a rule propagates. The
+   * Pluggy-label fallback only fills rows that are still uncategorised, so it never undoes a
+   * category someone picked by hand.
+   */
   async reclassifyAll(): Promise<ReclassifyResult> {
-    const [transactions, rules] = await Promise.all([
+    const [transactions, rules, categories] = await Promise.all([
       this.prisma.transaction.findMany({
-        select: { id: true, descriptionNormalized: true, categoryId: true, subcategory: true },
+        select: {
+          id: true,
+          descriptionNormalized: true,
+          pluggyCategory: true,
+          categoryId: true,
+          subcategory: true,
+        },
       }),
       this.rulesService.findActiveOrderedByPriority(),
+      this.prisma.category.findMany({ where: { parentId: null }, select: { id: true, name: true } }),
     ]);
+    const categoryIdByName = new Map(categories.map((category) => [category.name, category.id]));
 
     let updated = 0;
     for (const tx of transactions) {
-      const match = rules.find((rule) => tx.descriptionNormalized.includes(normalizeDescription(rule.pattern)));
+      const match = classify(tx.descriptionNormalized, tx.pluggyCategory, rules, categoryIdByName);
       if (!match) continue;
+      if (match.source === 'pluggy' && tx.categoryId) continue;
       if (match.categoryId === tx.categoryId && (match.subcategory ?? null) === (tx.subcategory ?? null)) {
         continue;
       }

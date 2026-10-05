@@ -103,6 +103,8 @@ Critical `Transaction` fields:
 
 Rule matching (in imports and in `POST /transactions/reclassify`) uses `descriptionNormalized.includes(normalizeDescription(rule.pattern))` — patterns are case- and accent-insensitive substrings, not regex. Both sides must go through `normalizeDescription` (NFD-strip + uppercase); comparing a raw/uppercased-only pattern against an accent-stripped description silently matches nothing.
 
+Open Finance rows also store Pluggy's own label in `pluggyCategory`. `common/classify.ts` applies rules first, then maps that label to a Kevin category by name (`PLUGGY_CATEGORY_MAP`) — the fallback that covers the long tail of merchants. Reclassify lets a rule overwrite, but the Pluggy fallback only fills rows that are still uncategorised, so manual picks survive. "Transfers"/"Third party transfers" are deliberately unmapped: a PIX to a person can be anything. Do **not** encode transfers by flipping `nature` to `INTERNAL_TRANSFER` — `accounts.service.ts` drops that nature from balance deltas; a `TRANSFER`-kind category already keeps a row out of P/L while leaving the balance intact.
+
 ### Open Finance sync (`open-finance/`)
 
 Pluggy is a **second importer**, not a second data model — it reuses `Account`, `Transaction`, `ImportBatch` and the classification rules.
