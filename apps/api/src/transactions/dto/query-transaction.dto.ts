@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import { Direction, TransactionNature, TransactionType } from '@ledger/shared';
+import { Direction, TransactionNature, TransactionType } from '@kevin/shared';
 
 export class QueryTransactionDto {
   @IsOptional()

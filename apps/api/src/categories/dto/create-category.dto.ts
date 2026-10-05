@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { CategoryKind } from '@ledger/shared';
+import { CategoryKind } from '@kevin/shared';
 
 export class CreateCategoryDto {
   @IsString()

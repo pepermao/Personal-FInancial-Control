@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AssetType } from '@ledger/shared';
+import { AssetType } from '@kevin/shared';
 import { AssetClass, assetClassOf } from './asset-class';
 
 describe('assetClassOf', () => {

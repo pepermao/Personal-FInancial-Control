@@ -1,17 +1,17 @@
 {
-  "name": "ledger",
+  "name": "kevin",
   "private": true,
   "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
   "scripts": {
-    "dev": "pnpm --filter @ledger/shared build && pnpm --parallel --filter \"./apps/*\" dev",
-    "build": "pnpm --filter @ledger/shared build && pnpm --recursive --filter \"./apps/*\" build",
+    "dev": "pnpm --filter @kevin/shared build && pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --filter @kevin/shared build && pnpm --recursive --filter \"./apps/*\" build",
     "lint": "pnpm --recursive --filter \"./apps/*\" lint",
     "test": "pnpm --recursive --filter \"./apps/*\" test",
     "format": "prettier --write \"apps/**/src/**/*.{ts,tsx}\" \"packages/**/src/**/*.ts\"",
-    "db:migrate": "pnpm --filter @ledger/api prisma:migrate",
-    "db:seed": "pnpm --filter @ledger/api prisma:seed",
-    "db:studio": "pnpm --filter @ledger/api prisma:studio",
-    "mcp": "pnpm --filter @ledger/api mcp"
+    "db:migrate": "pnpm --filter @kevin/api prisma:migrate",
+    "db:seed": "pnpm --filter @kevin/api prisma:seed",
+    "db:studio": "pnpm --filter @kevin/api prisma:studio",
+    "mcp": "pnpm --filter @kevin/api mcp"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

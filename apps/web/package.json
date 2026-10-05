@@ -1,5 +1,5 @@
 {
-  "name": "@ledger/web",
+  "name": "@kevin/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
-    "@ledger/shared": "workspace:*",
+    "@kevin/shared": "workspace:*",
     "@mui/icons-material": "^6.1.1",
     "@mui/material": "^6.1.1",
     "@mui/x-charts": "^7.28.0",

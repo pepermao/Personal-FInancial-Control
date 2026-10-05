@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { parse } from 'csv-parse/sync';
-import { Direction, TransactionNature } from '@ledger/shared';
+import { Direction, TransactionNature } from '@kevin/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClassificationRulesService } from '../classification-rules/classification-rules.service';
 import { buildFingerprint, normalizeDescription } from '../common/normalize';

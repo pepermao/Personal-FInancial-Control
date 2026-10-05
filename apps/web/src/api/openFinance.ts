@@ -1,4 +1,4 @@
-import type { ConnectTokenDto, PluggyConnectionDto } from '@ledger/shared';
+import type { ConnectTokenDto, PluggyConnectionDto } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface OpenFinanceStatusDto {

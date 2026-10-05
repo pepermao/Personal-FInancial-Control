@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { DashboardSummaryDto } from '@ledger/shared';
+import type { DashboardSummaryDto } from '@kevin/shared';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';

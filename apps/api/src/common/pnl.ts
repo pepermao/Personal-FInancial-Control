@@ -1,4 +1,4 @@
-import { CategoryKind, TransactionNature } from '@ledger/shared';
+import { CategoryKind, TransactionNature } from '@kevin/shared';
 
 /**
  * Centralises "what counts as real income/expense" so every aggregation agrees.

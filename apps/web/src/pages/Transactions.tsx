@@ -28,8 +28,8 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ClearIcon from '@mui/icons-material/Clear';
-import type { CategoryDto } from '@ledger/shared';
-import { CategoryKind, Direction } from '@ledger/shared';
+import type { CategoryDto } from '@kevin/shared';
+import { CategoryKind, Direction } from '@kevin/shared';
 import {
   accountsApi,
   categoriesApi,

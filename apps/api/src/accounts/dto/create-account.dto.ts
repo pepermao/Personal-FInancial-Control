@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUUID } from 'class-validator';
-import { AccountType } from '@ledger/shared';
+import { AccountType } from '@kevin/shared';
 
 export class CreateAccountDto {
   @IsUUID()

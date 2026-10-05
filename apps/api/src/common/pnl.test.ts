@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CategoryKind, TransactionNature } from '@ledger/shared';
+import { CategoryKind, TransactionNature } from '@kevin/shared';
 import { countsAsPnl, isInternalTransfer, isInvestmentFlow } from './pnl';
 
 describe('countsAsPnl', () => {

@@ -1,4 +1,4 @@
-import { CategoryKind, Direction } from '@ledger/shared';
+import { CategoryKind, Direction } from '@kevin/shared';
 
 /** How a transaction of a given kind (or uncategorized, falling back to direction) affects money flows. */
 export interface KindImpact {

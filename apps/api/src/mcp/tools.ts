@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Direction } from '@ledger/shared';
+import { Direction } from '@kevin/shared';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { DashboardService } from '../dashboard/dashboard.service';
 import type { AccountsService } from '../accounts/accounts.service';

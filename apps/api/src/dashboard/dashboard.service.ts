@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AccountType } from '@ledger/shared';
+import { AccountType } from '@kevin/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { AssetsService } from '../assets/assets.service';

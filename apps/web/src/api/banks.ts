@@ -1,4 +1,4 @@
-import type { BankDto } from '@ledger/shared';
+import type { BankDto } from '@kevin/shared';
 import { apiClient } from './client';
 
 export const banksApi = {

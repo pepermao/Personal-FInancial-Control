@@ -1,4 +1,4 @@
-import type { AssetDto, AssetType, ProfitRateType } from '@ledger/shared';
+import type { AssetDto, AssetType, ProfitRateType } from '@kevin/shared';
 import { apiClient } from './client';
 
 export interface AssetInput {

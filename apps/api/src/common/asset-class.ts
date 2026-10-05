@@ -1,4 +1,4 @@
-import { AssetType } from '@ledger/shared';
+import { AssetType } from '@kevin/shared';
 
 /** Broad investment classes, the grouping a portfolio is actually read at. */
 export const AssetClass = {

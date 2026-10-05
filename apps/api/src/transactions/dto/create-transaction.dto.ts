@@ -8,7 +8,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { Direction, TransactionNature, TransactionType } from '@ledger/shared';
+import { Direction, TransactionNature, TransactionType } from '@kevin/shared';
 
 export class CreateTransactionDto {
   @IsUUID()
