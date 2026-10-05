@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "kevin": {
+      "command": "node",
+      "args": ["apps/api/dist/src/mcp/main.js"],
+      "env": {}
+    }
+  }
+}

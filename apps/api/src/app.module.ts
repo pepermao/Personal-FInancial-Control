@@ -10,6 +10,7 @@ import { AssetsModule } from './assets/assets.module';
 import { ImportsModule } from './imports/imports.module';
 import { OpenFinanceModule } from './open-finance/open-finance.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { MarketModule } from './market/market.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ImportsModule,
     OpenFinanceModule,
     DashboardModule,
+    MarketModule,
   ],
 })
 export class AppModule {}

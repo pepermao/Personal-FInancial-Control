@@ -113,6 +113,27 @@ existing history is kept.
 Each sync writes an `ImportBatch` whose `endBalance` is the balance Pluggy reports, which anchors
 the account to bank truth — necessary because Open Finance only exposes 12 months of history.
 
+## MCP server (agents)
+
+A read-only MCP server exposes the ledger to any agent conversation:
+
+```bash
+pnpm build && pnpm mcp
+```
+
+`.mcp.json` registers it for Claude Code in this repo. To use it from anywhere:
+
+```bash
+claude mcp add kevin -- node /absolute/path/to/apps/api/dist/src/mcp/main.js
+```
+
+Tools cover position (`get_financial_overview`, `list_accounts`, `list_investments`), analysis
+(`aggregate_transactions`, `get_portfolio_analysis`, `get_cash_flow`, `get_net_worth_history`),
+market context (`get_benchmarks` — Selic/CDI/IPCA from the Banco Central) and honesty about the
+data itself (`get_data_quality` — last sync, uncategorised share).
+
+The server computes every figure; the agent never adds up rows. It cannot write anything.
+
 ## API overview
 
 | Module | Endpoints |
